@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>links</title>
+<meta name="description" content="where to find me online">
+<meta name="theme-color" content="#07080C">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07080C; --ink:#EEF1F5; --muted:#9AA3B2; --faint:#5F6776;
+  --glass:rgba(18,21,30,.55); --edge:rgba(255,255,255,.09); --edge-hi:rgba(255,255,255,.18);
+  --accent:#7C8CFF; --accent-2:#9FE7FF;
+  --online:#23A55A; --idle:#F0B232; --dnd:#F23F43; --offline:#80848E;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font-family:"Instrument Sans",system-ui,sans-serif;font-size:15px;line-height:1.5;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit}
+.mono{font-family:"JetBrains Mono",ui-monospace,monospace}
+
+/* ---------- backdrop: rain, glow, grain ---------- */
+#rain{position:fixed;inset:0;width:100%;height:100%;z-index:0}
+.glow{position:fixed;inset:-20%;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(40% 35% at 50% 0%, rgba(124,140,255,.22), transparent 70%),
+    radial-gradient(35% 30% at 85% 90%, rgba(159,231,255,.10), transparent 70%),
+    radial-gradient(30% 30% at 10% 80%, rgba(124,140,255,.08), transparent 70%);
+  animation:drift 18s ease-in-out infinite alternate}
+@keyframes drift{to{transform:translate3d(-3%,2%,0) scale(1.05)}}
+.grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.07;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* ---------- click to enter ---------- */
+#gate{position:fixed;inset:0;z-index:20;display:grid;place-items:center;cursor:pointer;
+  background:rgba(7,8,12,.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);transition:opacity .7s ease, visibility .7s}
+#gate span{font-family:"JetBrains Mono",monospace;letter-spacing:.32em;font-size:13px;color:var(--muted);animation:pulse 2.4s ease-in-out infinite}
+#gate.gone{opacity:0;visibility:hidden}
+@keyframes pulse{50%{opacity:.35}}
+
+/* ---------- layout ---------- */
+main{position:relative;z-index:2;min-height:100%;display:flex;flex-direction:column;align-items:center;
+  padding:max(56px,env(safe-area-inset-top)) 16px 48px;gap:14px}
+.wrap{width:100%;max-width:440px;display:flex;flex-direction:column;gap:14px}
+.card{background:var(--glass);border:1px solid var(--edge);border-radius:20px;
+  backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);
+  box-shadow:0 20px 60px -20px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.04)}
+.rise{opacity:0;transform:translateY(14px)}
+body.in .rise{animation:rise .8s cubic-bezier(.2,.7,.2,1) forwards}
+@keyframes rise{to{opacity:1;transform:none}}
+
+/* ---------- profile (discord-style) ---------- */
+.profile{overflow:hidden}
+.banner{height:110px;background:linear-gradient(120deg,#2A2F6B,#4B3A8C 45%,#1E5A7A);background-size:cover;background-position:center}
+.head{padding:0 20px 20px;position:relative}
+.avatar{position:relative;width:96px;height:96px;margin-top:-50px;border-radius:50%;padding:4px;
+  background:conic-gradient(from var(--a,0deg), var(--accent), var(--accent-2), #fff0, var(--accent));animation:spin 6s linear infinite}
+@property --a{syntax:"<angle>";inherits:false;initial-value:0deg}
+@keyframes spin{to{--a:360deg}}
+.avatar img,.avatar .face{width:100%;height:100%;border-radius:50%;object-fit:cover;display:grid;place-items:center;
+  background:#141824;border:4px solid #12151E;font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:32px}
+.status{position:absolute;right:2px;bottom:2px;width:22px;height:22px;border-radius:50%;border:4px solid #12151E;background:var(--offline)}
+.status.online{background:var(--online)} .status.idle{background:var(--idle)} .status.dnd{background:var(--dnd)}
+h1{margin:10px 0 0;font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:28px;letter-spacing:-.02em;line-height:1.15;
+  background:linear-gradient(180deg,#fff 30%,#B9C2FF);-webkit-background-clip:text;background-clip:text;color:transparent;
+  text-shadow:0 0 28px rgba(124,140,255,.25)}
+.user{color:var(--muted);font-size:13.5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.user .pill{font-size:11px;padding:1px 8px;border-radius:99px;border:1px solid var(--edge);color:var(--faint)}
+.custom{margin:10px 0 0;font-size:14px;color:var(--ink)}
+.custom:empty{display:none}
+.bio{margin:10px 0 0;color:var(--muted);min-height:1.5em}
+.bio .caret{display:inline-block;width:1px;height:1em;margin-left:2px;vertical-align:-2px;background:var(--accent-2);animation:pulse 1s steps(1) infinite}
+
+/* ---------- activity ---------- */
+.act{display:flex;gap:14px;padding:14px;align-items:center}
+.act[hidden]{display:none}
+.act .art{width:64px;height:64px;flex:none;border-radius:12px;background:#151925 center/cover;position:relative}
+.act .art small{position:absolute;right:-5px;bottom:-5px;width:22px;height:22px;border-radius:50%;background:#12151E center/cover;border:3px solid #12151E}
+.act .txt{min-width:0;flex:1}
+.act .lbl{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);display:flex;gap:6px;align-items:center}
+.act .lbl i{display:inline-flex;gap:2px;align-items:flex-end;height:10px}
+.act .lbl i b{width:2px;background:var(--online);animation:eq .9s ease-in-out infinite}
+.act .lbl i b:nth-child(2){animation-delay:-.3s}.act .lbl i b:nth-child(3){animation-delay:-.6s}
+@keyframes eq{0%,100%{height:3px}50%{height:10px}}
+.act .t1{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.act .t2,.act .t3{color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar{height:4px;border-radius:2px;background:rgba(255,255,255,.1);margin-top:8px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--online)}
+.times{display:flex;justify-content:space-between;font-size:11px;color:var(--faint);margin-top:3px}
+
+/* ---------- socials ---------- */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.soc{display:flex;align-items:center;gap:12px;min-width:0;padding:12px 14px;cursor:pointer;text-align:left;width:100%;
+  transition:transform .2s, border-color .2s, background .2s}
+.soc:hover,.soc:focus-visible{transform:translateY(-2px);border-color:var(--edge-hi);background:rgba(28,32,46,.65);outline:none}
+.soc .ic{width:38px;height:38px;flex:none;border-radius:11px;display:grid;place-items:center;color:#fff;background:var(--c)}
+.soc .ic{position:relative}
+.soc .ic svg{width:20px;height:20px;fill:currentColor}
+.sdot{position:absolute;right:-4px;bottom:-4px;width:14px;height:14px;border-radius:50%;border:3px solid #12151E;background:var(--offline)}
+.sdot.online{background:var(--online)} .sdot.idle{background:var(--idle)} .sdot.dnd{background:var(--dnd)}
+.soc .t{min-width:0}
+.soc b{display:block;font-weight:600;font-size:14px}
+.soc small{display:block;color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+footer{position:relative;z-index:2;margin-top:10px;display:flex;gap:16px;justify-content:center;align-items:center;font-size:12px;color:var(--faint)}
+footer button{background:none;border:0;cursor:pointer;color:var(--faint);padding:4px}
+footer button:hover{color:var(--ink)}
+#toast{position:fixed;left:50%;bottom:28px;z-index:30;transform:translate(-50%,20px);opacity:0;pointer-events:none;
+  padding:8px 14px;border-radius:10px;background:#0E1118;border:1px solid var(--edge);font-size:13px;transition:.25s}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+
+@media (max-width:380px){.grid{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .rise{opacity:1;transform:none}
+}
+</style>
+</head>
+<body>
+<canvas id="rain" aria-hidden="true"></canvas>
+<div class="glow" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+
+<div id="gate" role="button" tabindex="0" aria-label="Enter"><span>click to enter</span></div>
+
+<main>
+  <div class="wrap">
+    <section class="card profile rise" style="animation-delay:.05s">
+      <div class="banner" id="banner"></div>
+      <div class="head">
+        <div class="avatar"><div class="face" id="face">?</div><span class="status" id="status" title="offline"></span></div>
+        <h1 id="name"></h1>
+        <div class="user"><span class="mono" id="user"></span><span class="pill" id="statusTxt">offline</span></div>
+        <p class="custom" id="custom"></p>
+        <p class="bio"><span id="bio"></span><span class="caret"></span></p>
+      </div>
+    </section>
+
+    <section class="card act rise" id="act" hidden style="animation-delay:.12s">
+      <div class="art" id="actArt"><small id="actSmall" hidden></small></div>
+      <div class="txt">
+        <div class="lbl"><i id="eq" hidden><b></b><b></b><b></b></i><span id="actLbl"></span></div>
+        <div class="t1" id="actT1"></div>
+        <div class="t2" id="actT2"></div>
+        <div class="t3" id="actT3"></div>
+        <div id="prog" hidden><div class="bar"><i id="barFill"></i></div><div class="times mono"><span id="tNow"></span><span id="tEnd"></span></div></div>
+      </div>
+    </section>
+
+    <nav class="grid" id="grid" aria-label="Where to find me"></nav>
+  </div>
+
+  <footer class="rise" style="animation-delay:.4s">
+    <button id="mute" type="button" aria-pressed="false" title="Rain sound">🔇 rain</button>
+  </footer>
+</main>
+<div id="toast" role="status"></div>
+
+<script>
+/* ============================================================
+   EDIT ME. Leave anything empty ('') and it just won't show up.
+   ============================================================ */
+const ME = {
+  name: '',                         // display name at the top; empty uses your Discord display name
+  bio: ['just here for the vibes', 'probably online rn', 'dm me on discord'],
+
+  // Live Discord status, avatar, game and Spotify come from Lanyard.
+  // 1. Join discord.gg/lanyard with your account (you can mute it).
+  // 2. Discord settings → Advanced → Developer Mode on, then right-click yourself → Copy User ID.
+  // The first account fills the big card; every account also gets a live card in the grid.
+  discordIds: ['881075541954924554', '787529668953767966'],
+
+  reddit:    'Specialist-Tackle296', // without the u/                    // without the u/
+  steam:     '',                    // steamcommunity.com/id/<this>
+  roblox:    '',                    // roblox user ID number
+  spotify:   '',                    // open.spotify.com/user/<this>
+  minecraft: ['peRishAbilitY.2', 'rayzus.1', 'RealMelon.5'],   // NameMC profile names
+  youtube:   '',                    // without the @
+  twitch:    '',
+  tiktok:    '',                    // without the @
+  instagram: 'lilperishability',
+  x:         '',
+  github:    '',
+};
+/* ============================================================ */
+
+(() => {
+  const $ = id => document.getElementById(id);
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const toast = msg => { $('toast').textContent = msg; $('toast').classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => $('toast').classList.remove('on'), 1800); };
+
+  // ---------- socials ----------
+  const SITES = [
+    ['discord', 'Discord', '#5865F2', id => `https://discord.com/users/${id}`, 'M20.3 4.4A19.8 19.8 0 0 0 15.4 3l-.6 1.3a18.3 18.3 0 0 0-5.5 0L8.6 3a19.7 19.7 0 0 0-4.9 1.5C.6 9.1-.3 13.6.1 18a19.9 19.9 0 0 0 6 3l1.3-2.1a12.9 12.9 0 0 1-2-1l.5-.4a14.2 14.2 0 0 0 12.2 0l.5.4c-.6.4-1.3.7-2 1L18 21a19.8 19.8 0 0 0 6-3c.5-5.1-.8-9.6-3.7-13.6zM8 15.3c-1.2 0-2.2-1.1-2.2-2.4S6.8 10.5 8 10.5s2.2 1.1 2.2 2.4-1 2.4-2.2 2.4zm8 0c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4z'],
+    ['reddit', 'Reddit', '#FF4500', u => `https://www.reddit.com/user/${u}`, 'M22 12.1a2.2 2.2 0 0 0-3.7-1.6 10.8 10.8 0 0 0-5.8-1.8l1-4.6 3.2.7a1.6 1.6 0 1 0 .2-1l-3.6-.8a.5.5 0 0 0-.6.4L11.6 8.7a10.8 10.8 0 0 0-5.9 1.8 2.2 2.2 0 1 0-2.4 3.6v.7c0 3.5 4 6.3 8.7 6.3s8.7-2.8 8.7-6.3v-.7a2.2 2.2 0 0 0 1.3-2zM7 13.7a1.6 1.6 0 1 1 1.6 1.6A1.6 1.6 0 0 1 7 13.7zm8.9 4.2a5.8 5.8 0 0 1-3.9 1.2 5.8 5.8 0 0 1-3.9-1.2.4.4 0 0 1 .6-.6 4.9 4.9 0 0 0 3.3 1 4.9 4.9 0 0 0 3.3-1 .4.4 0 1 1 .6.6zm-.3-2.6a1.6 1.6 0 1 1 1.6-1.6 1.6 1.6 0 0 1-1.6 1.6z'],
+    ['steam', 'Steam', '#1B2838', u => `https://steamcommunity.com/id/${u}`, 'M12 1a11 11 0 0 0-11 10.1l5.9 2.4a3.1 3.1 0 0 1 1.8-.5l2.6-3.8v-.1a4.1 4.1 0 1 1 4.1 4.1h-.1l-3.8 2.7v.2a3.1 3.1 0 0 1-6.1.8L1.2 15A11 11 0 1 0 12 1zM7.9 17.7l-1.4-.6a2.3 2.3 0 1 0 1.2-3.1l1.4.6a1.7 1.7 0 1 1-1.2 3.1zm10.5-8.4a2.7 2.7 0 1 0-2.7 2.7 2.7 2.7 0 0 0 2.7-2.7zm-4.8 0a2.1 2.1 0 1 1 2.1 2.1 2.1 2.1 0 0 1-2.1-2.1z'],
+    ['roblox', 'Roblox', '#E2231A', u => `https://www.roblox.com/users/${u}/profile`, 'M5.2 1 1 18.8 18.8 23 23 5.2zm8.2 14-4.4-1.1 1.1-4.4 4.4 1.1z'],
+    ['spotify', 'Spotify', '#1DB954', u => `https://open.spotify.com/user/${u}`, 'M12 1a11 11 0 1 0 11 11A11 11 0 0 0 12 1zm5 15.9a.7.7 0 0 1-.9.2c-2.6-1.6-5.9-2-9.7-1.1a.7.7 0 1 1-.3-1.3c4.2-1 7.8-.6 10.7 1.2a.7.7 0 0 1 .2 1zm1.4-3a.9.9 0 0 1-1.2.3c-3-1.8-7.5-2.4-11-1.3a.9.9 0 1 1-.5-1.7c4-1.2 9-.6 12.4 1.5a.9.9 0 0 1 .3 1.2zm.1-3.2C14.9 8.6 9 8.4 5.6 9.4a1 1 0 1 1-.6-2c4-1.2 10.5-1 14.5 1.4a1 1 0 1 1-1 1.8z'],
+    ['minecraft', 'Minecraft', '#3C8527', u => `https://namemc.com/profile/${u}`, 'M3 3h18v18H3zm4 4v4h4V7zm6 0v4h4V7zm-3 4v2H8v6h3v-2h2v2h3v-6h-2v-2z'],
+    ['youtube', 'YouTube', '#FF0000', u => `https://www.youtube.com/@${u}`, 'M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8zM9.6 15.6V8.4l6.2 3.6z'],
+    ['twitch', 'Twitch', '#9146FF', u => `https://www.twitch.tv/${u}`, 'M2.1 0 .5 4.2v16.9h5.8V24h3.2l3-3h4.7l6.3-6.3V0zm19.7 13.6-3.7 3.7h-5.8l-3.2 3.2v-3.2H4.2V2.1h17.6zM18.1 6.3v6.3H16V6.3zm-5.8 0v6.3h-2.1V6.3z'],
+    ['tiktok', 'TikTok', '#111', u => `https://www.tiktok.com/@${u}`, 'M19.6 6.7a4.8 4.8 0 0 1-3.8-4.2V2h-3.4v13.7a2.9 2.9 0 1 1-2-2.7V9.4a6.3 6.3 0 1 0 5.4 6.3V8.7a8.2 8.2 0 0 0 4.8 1.5V6.8a4.8 4.8 0 0 1-1-.1z'],
+    ['instagram', 'Instagram', 'linear-gradient(45deg,#F58529,#DD2A7B,#8134AF)', u => `https://www.instagram.com/${u}`, 'M12 2.2c3.2 0 3.6 0 4.8.1 3.3.1 4.8 1.7 4.9 4.9.1 1.3.1 1.6.1 4.8s0 3.6-.1 4.8c-.1 3.2-1.7 4.8-4.9 4.9-1.3.1-1.6.1-4.8.1s-3.6 0-4.8-.1c-3.3-.1-4.8-1.7-4.9-4.9-.1-1.3-.1-1.6-.1-4.8s0-3.6.1-4.8C2.4 3.9 3.9 2.4 7.2 2.3c1.2-.1 1.6-.1 4.8-.1zM12 6.8a5.2 5.2 0 1 0 5.2 5.2A5.2 5.2 0 0 0 12 6.8zm0 8.6a3.4 3.4 0 1 1 3.4-3.4 3.4 3.4 0 0 1-3.4 3.4zm5.4-10a1.2 1.2 0 1 0 1.2 1.2 1.2 1.2 0 0 0-1.2-1.2z'],
+    ['x', 'X', '#000', u => `https://x.com/${u}`, 'M18.2 2.3h3.4l-7.4 8.4L23 21.7h-6.8l-5.3-7-6.1 7H1.4l7.9-9L.9 2.3h7l4.8 6.4zm-1.2 17.4h1.9L7 4.2H5z'],
+    ['github', 'GitHub', '#24292F', u => `https://github.com/${u}`, 'M12 .5a11.5 11.5 0 0 0-3.6 22.4c.6.1.8-.3.8-.6v-2c-3.2.7-3.9-1.4-3.9-1.4-.5-1.3-1.3-1.7-1.3-1.7-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.7 1.3 3.4 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.2-1.3-5.2-5.7 0-1.3.4-2.3 1.2-3.1-.1-.3-.5-1.5.1-3 0 0 1-.3 3.2 1.2a11 11 0 0 1 5.8 0c2.2-1.5 3.2-1.2 3.2-1.2.6 1.6.2 2.8.1 3 .7.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.1v3.2c0 .3.2.7.8.6A11.5 11.5 0 0 0 12 .5z'],
+  ];
+  // one entry per Discord account, then everything else that's filled in
+  const entries = [
+    ...ME.discordIds.map(id => ['discord', id]),
+    ...SITES.filter(([k]) => !['discord', 'minecraft'].includes(k) && ME[k]).map(([k]) => [k, ME[k]]),
+    ...ME.minecraft.map(n => ['minecraft', n]),
+  ];
+  $('grid').innerHTML = entries.map(([k, v], i) => {
+    const [, label, c, url, path] = SITES.find(x => x[0] === k);
+    const handle = k === 'discord' ? 'loading…' : k === 'reddit' ? 'u/' + v : k === 'roblox' ? 'profile' : k === 'minecraft' ? v.replace(/\.\d+$/, '') : (['youtube', 'tiktok', 'instagram'].includes(k) ? '@' : '') + v;
+    return `<a href="${esc(url(v))}" target="_blank" rel="noopener" class="card soc rise"${k === 'discord' ? ` data-dc="${esc(v)}"` : ''} style="--c:${c};animation-delay:${.18 + i * .04}s">
+      <span class="ic"${k === 'minecraft' ? ` style="background:#3C8527 url('https://mc-heads.net/avatar/${esc(encodeURIComponent(v.replace(/\.\d+$/, '')))}/80') center/cover;image-rendering:pixelated"` : ''}>${k === 'minecraft' ? '' : `<svg viewBox="0 0 24 24"><path d="${path}"/></svg>`}${k === 'discord' ? '<i class="sdot"></i>' : ''}</span>
+      <span class="t"><b>${label}</b><small>${esc(handle)}</small></span></a>`;
+  }).join('');
+
+  // ---------- profile basics ----------
+  $('name').textContent = ME.name;
+  $('face').textContent = (ME.name[0] || '?').toUpperCase();
+  if (ME.name) document.title = ME.name;
+
+  // ---------- Discord presence via Lanyard ----------
+  const STATUS_TXT = { online: 'online', idle: 'idle', dnd: 'do not disturb', offline: 'offline' };
+  let spot = null, discordBusy = false, lfmAct = null;
+  const mmss = ms => { const s = Math.max(0, Math.floor(ms / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
+  const assetUrl = (appId, img) => !img ? '' : img.startsWith('mp:external/') ? `https://media.discordapp.net/external/${img.slice(12)}`
+    : img.startsWith('spotify:') ? `https://i.scdn.co/image/${img.slice(8)}` : `https://cdn.discordapp.com/app-assets/${appId}/${img}.png`;
+  function showActivity(o) {
+    $('act').hidden = !o;
+    if (!o) return;
+    $('actLbl').textContent = o.lbl; $('eq').hidden = !o.eq;
+    $('actT1').textContent = o.t1 || ''; $('actT2').textContent = o.t2 || ''; $('actT3').textContent = o.t3 || '';
+    $('actArt').style.backgroundImage = o.art ? `url("${o.art}")` : '';
+    $('actSmall').hidden = !o.small; if (o.small) $('actSmall').style.backgroundImage = `url("${o.small}")`;
+    $('prog').hidden = !o.prog;
+  }
+  // the small grid card for any Discord account
+  function renderCard(id, d) {
+    const el = document.querySelector(`[data-dc="${id}"]`), u = d.discord_user;
+    if (!el || !u) return;
+    const st = d.discord_status || 'offline';
+    const game = (d.activities || []).find(a => a.type !== 4);
+    el.querySelector('.sdot').className = 'sdot ' + st;
+    el.querySelector('small').textContent = u.username + (d.listening_to_spotify ? ' · listening to Spotify' : game ? ' · ' + game.name : '');
+    if (u.avatar) el.querySelector('.ic').style.background = `#5865F2 url("https://cdn.discordapp.com/avatars/${u.id}/${u.avatar}.webp?size=80") center/cover`;
+    el.querySelector('svg').style.display = u.avatar ? 'none' : '';
+  }
+  function render(d) {
+    const u = d.discord_user, st = d.discord_status || 'offline';
+    $('status').className = 'status ' + st; $('status').title = STATUS_TXT[st];
+    $('statusTxt').textContent = STATUS_TXT[st];
+    if (u) {
+      $('user').textContent = u.username;
+      if (!ME.name) { $('name').textContent = u.global_name || u.username; document.title = $('name').textContent; }
+      if (u.avatar) {
+        const ext = u.avatar.startsWith('a_') ? 'gif' : 'webp';
+        $('face').outerHTML = `<img id="face" alt="" src="https://cdn.discordapp.com/avatars/${u.id}/${u.avatar}.${ext}?size=256">`;
+      }
+    }
+    const custom = (d.activities || []).find(a => a.type === 4);
+    $('custom').textContent = custom ? `${custom.emoji && !custom.emoji.id ? custom.emoji.name + ' ' : ''}${custom.state || ''}`.trim() : '';
+    spot = d.listening_to_spotify ? d.spotify : null;
+    const game = (d.activities || []).find(a => a.type !== 4 && a.type !== 2);
+    if (spot) showActivity({ lbl: 'Listening on Spotify', eq: true, t1: spot.song, t2: 'by ' + spot.artist.replace(/;/g, ','), t3: 'on ' + spot.album, art: spot.album_art_url, prog: true });
+    else if (game) {
+      const verb = ['Playing', 'Streaming', 'Listening to', 'Watching', '', 'Competing in'][game.type] || 'Playing';
+      const since = game.timestamps && game.timestamps.start;
+      showActivity({ lbl: verb, t1: game.name, t2: game.details, t3: game.state || (since ? mmss(Date.now() - since) + ' elapsed' : ''),
+        art: game.assets ? assetUrl(game.application_id, game.assets.large_image) : '',
+        small: game.assets ? assetUrl(game.application_id, game.assets.small_image) : '' });
+    }
+    discordBusy = !!(spot || game);
+    if (!discordBusy) showActivity(lfmAct);
+  }
+  setInterval(() => {
+    if (!spot || !spot.timestamps) return;
+    const { start, end } = spot.timestamps, now = Math.min(Date.now(), end);
+    $('barFill').style.width = ((now - start) / (end - start) * 100).toFixed(2) + '%';
+    $('tNow').textContent = mmss(now - start); $('tEnd').textContent = mmss(end - start);
+  }, 500);
+  function lanyard() {
+    const ws = new WebSocket('wss://api.lanyard.rest/socket');
+    let beat;
+    ws.onmessage = e => {
+      const m = JSON.parse(e.data);
+      if (m.op === 1) { beat = setInterval(() => ws.send('{"op":3}'), m.d.heartbeat_interval); ws.send(JSON.stringify({ op: 2, d: { subscribe_to_ids: ME.discordIds } })); }
+      if (m.op !== 0) return;
+      const list = m.t === 'INIT_STATE' ? Object.entries(m.d) : [[m.d.user_id, m.d]];
+      for (const [id, d] of list) { renderCard(id, d); if (id === ME.discordIds[0]) render(d); }
+    };
+    ws.onclose = () => { clearInterval(beat); setTimeout(lanyard, 5000); };
+  }
+  if (ME.discordIds.length) lanyard();
+  nowPlaying();
+
+  // When Discord shows nothing, fall back to the last song scrobbled. /api/nowplaying asks Last.fm on the
+  // server, so the Last.fm username and key stay in Vercel's environment variables, never in this page.
+  async function nowPlaying() {
+    try {
+      const r = await fetch('/api/nowplaying');
+      const t = r.ok ? await r.json() : null;
+      lfmAct = t && t.name ? { lbl: t.live ? 'Listening now' : 'Last played', eq: t.live, t1: t.name, t2: 'by ' + t.artist, t3: t.album ? 'on ' + t.album : '', art: t.art } : null;
+      if (!discordBusy) showActivity(lfmAct);
+    } catch (e) {}
+    setTimeout(nowPlaying, 30000);
+  }
+
+  // ---------- rain ----------
+  const cv = $('rain'), cx = cv.getContext('2d');
+  let W, H, drops = [], splashes = [];
+  const drop = init => {
+    const z = Math.random();  // depth: far drops are slower, shorter, fainter
+    return { x: Math.random() * (W + 200) - 100, y: init ? Math.random() * H : -20 - Math.random() * 100, v: 7 + z * 12, l: 8 + z * 18, a: .08 + z * .32, w: .6 + z * .9, z };
+  };
+  const size = () => {
+    const d = Math.min(devicePixelRatio || 1, 2);
+    W = innerWidth; H = innerHeight; cv.width = W * d; cv.height = H * d; cx.setTransform(d, 0, 0, d, 0, 0);
+    drops = Array.from({ length: Math.round(W * H / (reduce ? 9000 : 4500)) }, () => drop(true));
+  };
+  let wind = -1.2, mx = .5;
+  addEventListener('pointermove', e => { mx = e.clientX / W; });
+  const frame = () => {
+    wind += ((mx - .5) * -4 - wind) * .02;
+    cx.clearRect(0, 0, W, H); cx.lineCap = 'round';
+    for (const d of drops) {
+      d.x += wind * (.4 + d.z); d.y += d.v;
+      if (d.y > H) {
+        if (d.z > .6 && splashes.length < 80) splashes.push({ x: d.x, y: H - Math.random() * 40, r: 0, a: .35 });
+        Object.assign(d, drop(false));
+      }
+      cx.strokeStyle = `rgba(190,205,255,${d.a})`; cx.lineWidth = d.w;
+      cx.beginPath(); cx.moveTo(d.x, d.y); cx.lineTo(d.x - wind * d.l * .12, d.y - d.l); cx.stroke();
+    }
+    splashes = splashes.filter(s => (s.r += .6, s.a -= .02) > 0);
+    for (const s of splashes) {
+      cx.strokeStyle = `rgba(190,205,255,${s.a})`; cx.lineWidth = .8;
+      cx.beginPath(); cx.ellipse(s.x, s.y, s.r * 2, s.r * .5, 0, 0, Math.PI * 2); cx.stroke();
+    }
+    requestAnimationFrame(frame);
+  };
+  addEventListener('resize', size); size(); frame();
+
+  // ---------- rain sound (filtered noise, made live) ----------
+  let ac, gain;
+  const setSound = on => {
+    if (!ac) {
+      ac = new (window.AudioContext || window.webkitAudioContext)();
+      const buf = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate), ch = buf.getChannelData(0);
+      for (let i = 0, last = 0; i < ch.length; i++) { last = (last + .02 * (Math.random() * 2 - 1)) / 1.02; ch[i] = last * 3.5; }
+      const src = ac.createBufferSource(); src.buffer = buf; src.loop = true;
+      const hp = ac.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 400;
+      const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2600;
+      gain = ac.createGain(); gain.gain.value = 0;
+      src.connect(hp).connect(lp).connect(gain).connect(ac.destination); src.start();
+    }
+    gain.gain.setTargetAtTime(on ? .35 : 0, ac.currentTime, .6);
+    $('mute').textContent = on ? '🔊 rain' : '🔇 rain';
+    $('mute').setAttribute('aria-pressed', on);
+    try { localStorage.setItem('links-sound', on ? '1' : '0'); } catch (e) {}
+  };
+  $('mute').addEventListener('click', () => setSound($('mute').getAttribute('aria-pressed') !== 'true'));
+
+  // ---------- gate ----------
+  const enter = () => {
+    if (document.body.classList.contains('in')) return;
+    $('gate').classList.add('gone'); document.body.classList.add('in');
+    let pref = '1'; try { pref = localStorage.getItem('links-sound') ?? '1'; } catch (e) {}
+    if (pref === '1') setSound(true);
+    typeBio();
+  };
+  $('gate').addEventListener('click', enter);
+  $('gate').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); enter(); } });
+
+  // ---------- typed bio ----------
+  function typeBio() {
+    const el = $('bio'), LINES = ME.bio.length ? ME.bio : [''];
+    if (reduce || LINES.length < 2) { el.textContent = LINES[0]; return; }
+    let li = 0, ci = 0, del = false;
+    (function tick() {
+      const s = LINES[li];
+      el.textContent = s.slice(0, ci);
+      if (!del && ci === s.length) { del = true; return setTimeout(tick, 2200); }
+      if (del && ci === 0) { del = false; li = (li + 1) % LINES.length; }
+      ci += del ? -1 : 1;
+      setTimeout(tick, del ? 28 : 55 + Math.random() * 40);
+    })();
+  }
+})();
+</script>
+</body>
+</html>
