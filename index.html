@@ -25,8 +25,9 @@ a{color:inherit;text-decoration:none}
 .mono{font-family:"JetBrains Mono",ui-monospace,monospace}
 [hidden]{display:none!important}
 
-/* ---------- background: aurora + grain ---------- */
-#aurora{position:fixed;inset:0;width:100%;height:100%;z-index:0;display:block}
+/* ---------- background (React Bits' Silk) + grain ---------- */
+#bg{position:fixed;inset:0;z-index:0;opacity:0;transition:opacity 1s}
+body.past #bg{opacity:1}
 .grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.07;mix-blend-mode:overlay;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 
@@ -121,13 +122,13 @@ main{position:relative;z-index:2}
 
 /* ---------- minecraft ---------- */
 .mc{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.mc a{display:flex;flex-direction:column;align-items:center;gap:10px;padding:22px 14px 16px;transition:transform .2s, border-color .2s}
-.mc a:hover{transform:translateY(-3px);border-color:var(--edge-hi)}
-.mc img{height:180px;image-rendering:pixelated;filter:drop-shadow(0 12px 18px rgba(0,0,0,.5));animation:sway 4s ease-in-out infinite alternate}
-.mc a:nth-child(2) img{animation-delay:-2s}
-@keyframes sway{from{transform:rotate(-2deg) translateY(0)}to{transform:rotate(2deg) translateY(-6px)}}
+.mc .card{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 12px 16px}
+.mc canvas{width:200px;max-width:100%;height:260px;cursor:grab;touch-action:pan-y}
+.mc canvas:active{cursor:grabbing}
 .mc b{font-weight:600}
-.mc small{color:var(--faint);font-size:11.5px}
+.mc a{color:var(--faint);font-size:11.5px}
+.mc a:hover{color:var(--ink)}
+.mc .none{height:260px;display:grid;place-items:center;color:var(--faint);font-size:12.5px}
 
 /* ---------- instagram ---------- */
 .igrow{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:8px;scrollbar-width:thin}
@@ -145,7 +146,7 @@ main{position:relative;z-index:2}
 </style>
 </head>
 <body>
-<canvas id="aurora" aria-hidden="true"></canvas>
+<div id="bg" aria-hidden="true"></div>
 <div class="grain" aria-hidden="true"></div>
 
 <div class="option-wheel" id="wheel" role="listbox" tabindex="0" aria-label="Sections"></div>
@@ -178,6 +179,177 @@ main{position:relative;z-index:2}
   </section>
 </main>
 
+<script>
+/* React Bits' Silk background, MIT + Commons Clause, github.com/DavidHDev/react-bits.
+   Bundled unchanged with a tiny stand-in for React, so it runs on this plain page. */
+(()=>{var U=null,D=n=>({current:n});var K=n=>{U&&U.push(n)};function J(n,h){let{children:l,ref:c,className:s,style:x,...g}=h||{},d=document.createElement(n);if(s&&(d.className=s),x)for(let[m,E]of Object.entries(x))m.startsWith("--")?d.style.setProperty(m,E):d.style[m]=E;for(let[m,E]of Object.entries(g))E!=null&&typeof E!="function"&&d.setAttribute(m,E);return[].concat(l??[]).forEach(m=>m!=null&&d.append(m)),c&&(c.current=d),d}function pe(n,h,l){U=[];let c=n(h),s=U;U=null,l.append(c);let x=s.map(g=>g()).filter(g=>typeof g=="function");return()=>{x.forEach(g=>g()),c.remove()}}var ge=document.createElement("style");ge.textContent=`.silk-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.silk-canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+`;document.head.appendChild(ge);var Ge=`#version 300 es
+in vec2 aPosition;
+void main() {
+  gl_Position = vec4(aPosition, 0.0, 1.0);
+}`,Re=`
+uniform vec2 uView;
+uniform float uScale;
+uniform float uRotation;
+uniform float uTime;
+uniform float uWave;
+uniform float uRipple;
+uniform float uFold;
+uniform vec2 uShift;
+uniform vec4 uPointer;
+uniform vec2 uDrag;
+uniform vec4 uWaves[4];
+
+const float e = 2.71828182845904523536;
+
+float noise(vec2 texCoord) {
+  float G = e;
+  vec2 r = (G * sin(G * texCoord));
+  return fract(r.x * r.y * (1.0 + texCoord.x));
+}
+
+vec2 rotateUvs(vec2 uv, float angle) {
+  float c = cos(angle);
+  float s = sin(angle);
+  mat2 rot = mat2(c, -s, s, c);
+  return rot * uv;
+}
+
+vec2 bend(vec2 uv) {
+  vec2 aspect = vec2(uView.x / uView.y, 1.0);
+  vec2 offset = (uv - uPointer.xy) * aspect;
+  float touch = uPointer.z * exp(-dot(offset, offset) / (uPointer.w * uPointer.w));
+  uv -= uDrag * touch;
+  for (int i = 0; i < 4; i++) {
+    vec4 wave = uWaves[i];
+    if (wave.w <= 0.0) continue;
+    vec2 q = (uv - wave.xy) * aspect;
+    float dist = length(q);
+    float front = dist - wave.z;
+    float ring = exp(-front * front * 60.0) * wave.w;
+    uv += q / max(dist, 0.0001) / aspect * ring * 0.034 * sin(front * 34.0);
+  }
+  return uv;
+}
+
+float silk(vec2 vUv) {
+  vec2 uv = rotateUvs(vUv * uScale, uRotation);
+  vec2 tex = uv * uScale + uShift;
+  float tOffset = uTime;
+  tex.y += 0.03 * uWave * sin(8.0 * tex.x - tOffset);
+  return 0.6 + 0.4 * uFold * sin(5.0 * (tex.x + tex.y + cos(3.0 * tex.x + 5.0 * tex.y) + 0.02 * tOffset) + uRipple * sin(20.0 * (tex.x + tex.y - 0.1 * tOffset)));
+}
+`,Oe=`#version 300 es
+precision highp float;
+${Re}
+out vec4 outColor;
+
+void main() {
+  vec2 vUv = gl_FragCoord.xy / uView;
+  float pattern = silk(bend(vUv));
+  float n = clamp((pattern - 0.2) / 0.8, 0.0, 1.0);
+  outColor = vec4(pow(n, 6.0), 0.0, 0.0, 1.0);
+}`,Ye=`#version 300 es
+precision highp float;
+${Re}
+uniform sampler2D uBloom;
+uniform vec3 uColor;
+uniform vec3 uSheenColor;
+uniform float uNoiseIntensity;
+uniform float uDepth;
+uniform float uSheen;
+uniform float uGlow;
+uniform float uLightMode;
+uniform vec3 uLight;
+uniform vec2 uStep;
+uniform float uPresence;
+uniform float uFade;
+out vec4 outColor;
+
+float smootherstep01(float t) {
+  t = clamp(t, 0.0, 1.0);
+  return t * t * t * (t * (t * 6.0 - 15.0) + 10.0);
+}
+
+vec3 softClip(vec3 c) {
+  vec3 over = max(c - 0.75, 0.0);
+  return min(c, 0.75) + 0.25 * (1.0 - exp(-over * 4.0));
+}
+
+void main() {
+  vec2 vUv = gl_FragCoord.xy / uView;
+  vec2 coord = bend(vUv);
+  float pattern = silk(coord);
+  float rnd = noise(gl_FragCoord.xy);
+  float n = clamp((pattern - 0.2) / 0.8, 0.0, 1.0);
+
+  float gx = silk(coord + vec2(uStep.x, 0.0)) - pattern;
+  float gy = silk(coord + vec2(0.0, uStep.y)) - pattern;
+  vec3 normal = normalize(vec3(-gx * 26.0, -gy * 26.0, 1.0));
+  vec3 toLight = normalize(vec3(uLight.xy, 0.85));
+  float relief = 1.0 + (dot(normal, toLight) - toLight.z) * 1.8 * uDepth;
+  vec3 halfway = normalize(toLight + vec3(0.0, 0.0, 1.0));
+  float gloss = pow(max(dot(normal, halfway), 0.0), 48.0) * smoothstep(0.25, 0.85, n);
+  float crest = pow(n, 5.0);
+  float shine = (gloss * 0.85 + crest * 0.4) * uSheen * (1.0 + uLight.z * 0.6);
+
+  float bloom = 0.0;
+  if (uGlow > 0.0) {
+    bloom += textureLod(uBloom, vUv, 1.0).r * 0.35;
+    bloom += textureLod(uBloom, vUv, 2.0).r * 0.3;
+    bloom += textureLod(uBloom, vUv, 3.0).r * 0.2;
+    bloom += textureLod(uBloom, vUv, 4.0).r * 0.15;
+  }
+
+  vec3 result;
+  if (uLightMode > 0.5) {
+    float fold = smoothstep(0.28, 0.9, pattern);
+    float specular = smoothstep(0.72, 0.98, pattern);
+    vec3 shadowColor = uColor * (0.72 - 0.12 * uDepth);
+    vec3 bodyColor = min(uColor * 1.18, vec3(1.0));
+    vec3 lightBase = mix(shadowColor, bodyColor, fold) * mix(1.0, relief, 0.6);
+    lightBase = mix(lightBase, vec3(1.0), clamp(specular * 0.92 + shine * 0.22 + bloom * uGlow * 0.2, 0.0, 1.0));
+    float fineNoise = noise(gl_FragCoord.xy * 0.63 + vec2(17.0, 41.0));
+    float grainSignal = (rnd + fineNoise - 1.0);
+    float grainStrength = clamp(uNoiseIntensity * 0.038, 0.0, 0.16);
+    result = clamp(lightBase + grainSignal * grainStrength, 0.0, 1.0);
+  } else {
+    float grain = rnd / 15.0 * uNoiseIntensity;
+    float floorValue = mix(0.2, 0.03, uDepth);
+    float curve = uDepth > 0.0 ? pow(n, 1.0 + 1.4 * uDepth) : n;
+    float shade = uDepth > 0.0 ? floorValue + (1.0 - floorValue) * curve : pattern;
+    vec3 tone = mix(uColor, pow(uColor, vec3(1.45)), (1.0 - n) * uDepth);
+    vec3 lit = tone * shade * relief - vec3(grain);
+    vec3 tint = mix(uColor, uSheenColor, 0.8);
+    vec3 extra = tint * (shine + bloom * uGlow * 0.55);
+    float blend = clamp((uSheen + uGlow) * 4.0, 0.0, 1.0);
+    result = mix(clamp(lit, 0.0, 1.0), clamp(softClip(lit + extra), 0.0, 1.0), blend);
+  }
+
+  float edge = uFade * 0.5;
+  float mask = 1.0;
+  if (edge > 0.0) {
+    mask = smootherstep01(vUv.x / edge) * smootherstep01((1.0 - vUv.x) / edge);
+    mask *= smootherstep01(vUv.y / edge) * smootherstep01((1.0 - vUv.y) / edge);
+  }
+  float alpha = uPresence * mask;
+  outColor = vec4(result * alpha, alpha);
+}`,Ve=2.2,We=1.6,xe=1.6,C=[-.55,.7],we=Math.hypot(C[0],C[1]),G=(n,h,l)=>Math.min(l,Math.max(h,n)),ze=n=>n*n*n*(n*(n*6-15)+10),He=n=>{let h=Number(n)||0;if(!h)return[0,0];let l=c=>{let s=Math.sin(h*12.9898+c*78.233)*43758.5453;return s-Math.floor(s)-.5};return[l(1)*6,l(2)*6]},Ee=(n,h,l)=>{let c=n.createShader(h);return c?(n.shaderSource(c,l),n.compileShader(c),n.getShaderParameter(c,n.COMPILE_STATUS)?c:(n.deleteShader(c),null)):null},ye=(n,h)=>{let l=Ee(n,n.VERTEX_SHADER,Ge),c=Ee(n,n.FRAGMENT_SHADER,h),s=n.createProgram();if(!l||!c||!s)return null;if(n.attachShader(s,l),n.attachShader(s,c),n.bindAttribLocation(s,0,"aPosition"),n.linkProgram(s),n.deleteShader(l),n.deleteShader(c),!n.getProgramParameter(s,n.LINK_STATUS))return n.deleteProgram(s),null;let x={},g=n.getProgramParameter(s,n.ACTIVE_UNIFORMS);for(let d=0;d<g;d++){let m=n.getActiveUniform(s,d);m&&(x[m.name.replace(/\[0\]$/,"")]=n.getUniformLocation(s,m.name))}return{program:s,uniforms:x}},qe=({speed:n=5,scale:h=1,color:l="#7B7481",sheenColor:c="#ffffff",noiseIntensity:s=1.5,rotation:x=0,sheen:g=.5,depth:d=.5,glow:m=.3,ripple:E=1,wave:be=1,variation:Me=0,mouseInteraction:Se=!0,interactionStrength:Ae=1,clickRipple:Le=!0,intro:Fe=!0,fade:Ce=0,lightMode:Pe=!1,paused:_e=!1,dpr:Ue,className:Q="",style:De})=>{let Z=D(null),ee=D(null),O=D(null),y=D(null);return y.current={speed:n,scale:h,color:String(l),sheenColor:String(c),noiseIntensity:Math.max(0,s),rotation:x,sheen:Math.max(0,g),depth:G(d,0,1),glow:Math.max(0,m),ripple:Math.max(0,E),wave:Math.max(0,be),variation:Me,mouseInteraction:Se,interactionStrength:Math.max(0,Ae),clickRipple:Le,intro:Fe,fade:G(Ce,0,1),lightMode:Pe,paused:_e,dpr:Ue},K(()=>{let S=Z.current,p=ee.current,e=p?.getContext("webgl2",{alpha:!0,premultipliedAlpha:!0,antialias:!1,depth:!1,stencil:!1,powerPreference:"high-performance"});if(!S||!p||!e)return;let I=ye(e,Oe),X=ye(e,Ye);if(!I||!X)return;let te=e.createBuffer(),Y=e.createVertexArray();e.bindVertexArray(Y),e.bindBuffer(e.ARRAY_BUFFER,te),e.bufferData(e.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),e.STATIC_DRAW),e.enableVertexAttribArray(0),e.vertexAttribPointer(0,2,e.FLOAT,!1,0,0);let P=e.createTexture(),V=e.createFramebuffer(),R={width:0,height:0},Ie=(t,r)=>{R.width===t&&R.height===r||(R.width=t,R.height=r,e.bindTexture(e.TEXTURE_2D,P),e.texImage2D(e.TEXTURE_2D,0,e.RGBA8,t,r,0,e.RGBA,e.UNSIGNED_BYTE,null),e.texParameteri(e.TEXTURE_2D,e.TEXTURE_MIN_FILTER,e.LINEAR_MIPMAP_LINEAR),e.texParameteri(e.TEXTURE_2D,e.TEXTURE_MAG_FILTER,e.LINEAR),e.texParameteri(e.TEXTURE_2D,e.TEXTURE_WRAP_S,e.CLAMP_TO_EDGE),e.texParameteri(e.TEXTURE_2D,e.TEXTURE_WRAP_T,e.CLAMP_TO_EDGE),e.bindFramebuffer(e.FRAMEBUFFER,V),e.framebufferTexture2D(e.FRAMEBUFFER,e.COLOR_ATTACHMENT0,e.TEXTURE_2D,P,0))},A=document.createElement("canvas").getContext("2d",{willReadFrequently:!0}),W=new Map,oe=t=>{if(W.has(t))return W.get(t);let r=[1,1,1];if(A){A.clearRect(0,0,1,1),A.fillStyle="#ffffff",A.fillStyle=t,A.fillRect(0,0,1,1);let[a,i,f]=A.getImageData(0,0,1,1).data;r=[a/255,i/255,f/255]}return W.set(t,r),r},_=window.matchMedia?.("(prefers-reduced-motion: reduce)").matches??!1,u={width:1,height:1,ratio:1},v={x:0,y:0,inside:!1},w=[],z=new Float32Array(16),o={flow:0,intro:y.current.intro&&!_?0:1,touch:0,x:0,y:0,dragX:0,dragY:0,lightX:C[0],lightY:C[1]},b=0,L=0,B=!0,ne=(t,r,a,i,f)=>{let[F,$]=He(i.variation);e.uniform2f(t.uView,r,a),e.uniform1f(t.uScale,i.scale),e.uniform1f(t.uRotation,i.rotation),e.uniform1f(t.uTime,o.flow-We*(1-f)),e.uniform1f(t.uWave,i.wave),e.uniform1f(t.uRipple,i.ripple),e.uniform1f(t.uFold,.25+.75*f),e.uniform2f(t.uShift,F,$),e.uniform4f(t.uPointer,o.x/u.width,1-o.y/u.height,o.touch*i.interactionStrength,.32),e.uniform2f(t.uDrag,o.dragX,o.dragY),e.uniform4fv(t.uWaves,z)},H=()=>{let t=y.current,r=ze(o.intro),a=1-Math.pow(1-o.intro,3);e.bindVertexArray(Y),z.fill(0),w.slice(-4).forEach((f,F)=>{z.set([f.x,f.y,f.age*.6,Math.exp(-f.age/(xe*.45))],F*4)}),t.glow>0&&(Ie(Math.max(1,Math.round(p.width/4)),Math.max(1,Math.round(p.height/4))),e.bindFramebuffer(e.FRAMEBUFFER,V),e.viewport(0,0,R.width,R.height),e.useProgram(I.program),ne(I.uniforms,R.width,R.height,t,r),e.drawArrays(e.TRIANGLES,0,3),e.bindTexture(e.TEXTURE_2D,P),e.generateMipmap(e.TEXTURE_2D));let i=X.uniforms;e.bindFramebuffer(e.FRAMEBUFFER,null),e.viewport(0,0,p.width,p.height),e.useProgram(X.program),ne(i,p.width,p.height,t,r),e.uniform3fv(i.uColor,oe(t.color)),e.uniform3fv(i.uSheenColor,oe(t.sheenColor)),e.uniform1f(i.uNoiseIntensity,t.noiseIntensity),e.uniform1f(i.uDepth,t.depth),e.uniform1f(i.uSheen,t.sheen),e.uniform1f(i.uGlow,t.glow),e.uniform1f(i.uLightMode,t.lightMode?1:0),e.uniform3f(i.uLight,o.lightX,o.lightY,o.touch*t.interactionStrength),e.uniform2f(i.uStep,u.ratio/p.width,u.ratio/p.height),e.uniform1f(i.uPresence,a),e.uniform1f(i.uFade,t.fade),e.activeTexture(e.TEXTURE0),e.bindTexture(e.TEXTURE_2D,P),e.uniform1i(i.uBloom,0),e.drawArrays(e.TRIANGLES,0,3)},re=t=>{if(b=0,!B||document.hidden)return;let r=y.current,a=L?Math.min(.05,(t-L)/1e3):1/60;L=t;let i=!r.paused&&!_&&r.speed!==0;i&&(o.flow+=a*.1*r.speed),!r.intro||_?o.intro=1:o.intro<1&&(o.intro=Math.min(1,o.intro+a/Ve));let f=r.mouseInteraction&&v.inside&&!_;f&&o.touch<.01&&(o.x=v.x,o.y=v.y);let F=1-Math.exp(-a*10),$=o.x,Xe=o.y;o.x+=(v.x-o.x)*F,o.y+=(v.y-o.y)*F;let Be=(o.x-$)/Math.max(a,.001)/u.height,Ne=(o.y-Xe)/Math.max(a,.001)/u.height,me=1-Math.exp(-a*4);o.dragX+=(G(Be*.03,-.06,.06)-o.dragX)*me,o.dragY+=(G(-Ne*.03,-.06,.06)-o.dragY)*me,o.touch+=((f?1:0)-o.touch)*(1-Math.exp(-a*(f?3.5:1.4)));let N=C[0],k=C[1];if(f){let T=(v.x/u.width-.5)*(u.width/u.height),ve=.5-v.y/u.height,j=Math.hypot(T,ve);j>.04?(N=T/j*we,k=ve/j*we):(N=o.lightX,k=o.lightY)}let de=1-Math.exp(-a*3);o.lightX+=(N-o.lightX)*de,o.lightY+=(k-o.lightY)*de;for(let T=w.length-1;T>=0;T--)w[T].age+=a,w[T].age>xe*2.5&&w.splice(T,1);H();let ke=o.intro<1||w.length>0||Math.abs((f?1:0)-o.touch)>.002||Math.abs(o.dragX)+Math.abs(o.dragY)>2e-4||Math.abs(v.x-o.x)+Math.abs(v.y-o.y)>.3||Math.abs(N-o.lightX)+Math.abs(k-o.lightY)>.001;i||ke?b=requestAnimationFrame(re):L=0},M=()=>{!b&&B&&!document.hidden&&(b=requestAnimationFrame(re))},q=()=>{let t=y.current,r=Math.max(1,S.clientWidth),a=Math.max(1,S.clientHeight),i=Math.min(t.dpr||window.devicePixelRatio||1,2);u.width=r,u.height=a,u.ratio=i,p.width=Math.max(1,Math.round(r*i)),p.height=Math.max(1,Math.round(a*i)),b||H(),M()},ie=t=>{let r=S.getBoundingClientRect(),a=t.clientX-r.left,i=t.clientY-r.top;return{x:a,y:i,inside:a>=0&&i>=0&&a<=r.width&&i<=r.height}},ae=t=>{let r=ie(t);v.x=r.x,v.y=r.y,v.inside=r.inside,M()},se=t=>{if(!y.current.clickRipple||_)return;let a=ie(t);a.inside&&(w.push({x:a.x/u.width,y:1-a.y/u.height,age:0}),w.length>4&&w.shift(),M())},ce=()=>{v.inside=!1,M()},le=()=>{L=0,M()},ue=new ResizeObserver(q);ue.observe(S);let fe=new IntersectionObserver(t=>{B=t.some(r=>r.isIntersecting),B&&(L=0,M())});fe.observe(S),window.addEventListener("pointermove",ae,{passive:!0}),window.addEventListener("pointerdown",se,{passive:!0}),document.documentElement.addEventListener("pointerleave",ce),document.addEventListener("visibilitychange",le),q();let he=y.current.dpr;return O.current=()=>{let t=y.current;if(t.dpr!==he){he=t.dpr,q();return}b||H(),M()},()=>{cancelAnimationFrame(b),O.current=null,ue.disconnect(),fe.disconnect(),window.removeEventListener("pointermove",ae),window.removeEventListener("pointerdown",se),document.documentElement.removeEventListener("pointerleave",ce),document.removeEventListener("visibilitychange",le),e.deleteTexture(P),e.deleteFramebuffer(V),e.deleteProgram(I.program),e.deleteProgram(X.program),e.deleteBuffer(te),e.deleteVertexArray(Y),e.getExtension("WEBGL_lose_context")?.loseContext()}},[]),K(()=>{O.current?.()}),J("div",{ref:Z,className:`silk-container${Q?` ${Q}`:""}`,style:De,children:J("canvas",{ref:ee,className:"silk-canvas","aria-hidden":"true"})})},Te=qe;window.ReactBitsBg={mount:pe,Silk:Te};})();
+
+</script>
 <script>
 /* ============================================================
    EDIT ME. Leave anything empty ('') and it just won't show up.
@@ -245,12 +417,31 @@ const ME = {
   }).join('');
 
   // ---------- minecraft (by UUID, so the skin is always the right account's) ----------
-  $('mc').innerHTML = ME.minecraft.map((m, i) => {
-    const id = m.uuid.replace(/-/g, '');
-    return `<a href="https://namemc.com/profile/${esc(m.uuid)}" target="_blank" rel="noopener" class="card reveal" style="transition-delay:${i * .08}s">
-      <img src="https://mc-heads.net/body/${esc(id)}/180" alt="${esc(m.name)}'s skin" loading="lazy">
-      <b>${esc(m.name)}</b><small>view on NameMC ↗</small></a>`;
-  }).join('');
+  $('mc').innerHTML = ME.minecraft.map((m, i) => `<div class="card reveal" style="transition-delay:${i * .08}s">
+      <canvas data-uuid="${esc(m.uuid)}" aria-label="${esc(m.name)}'s skin"></canvas>
+      <b>${esc(m.name)}</b><a href="https://namemc.com/profile/${esc(m.uuid)}" target="_blank" rel="noopener">view on NameMC ↗</a></div>`).join('');
+
+  // 3D skins with skinview3d, loaded once the section is close. Skins and capes come from Mojang through /api/skin.
+  const mcWatch = new IntersectionObserver(es => {
+    if (!es.some(e => e.isIntersecting)) return;
+    mcWatch.disconnect();
+    const sc = document.createElement('script');
+    sc.src = 'https://cdn.jsdelivr.net/npm/skinview3d@3.4.1/bundles/skinview3d.bundle.js';
+    sc.onload = () => document.querySelectorAll('#mc canvas').forEach((cv, i) => {
+      const uuid = cv.dataset.uuid.replace(/-/g, '');
+      const v = new skinview3d.SkinViewer({ canvas: cv, width: 200, height: 260 });
+      v.loadSkin('/api/skin?uuid=' + uuid).catch(() => { cv.outerHTML = '<div class="none">skin unavailable</div>'; });
+      v.loadCape('/api/skin?type=cape&uuid=' + uuid).catch(() => {});
+      v.zoom = 0.82; v.fov = 50;
+      v.controls.enableZoom = false;
+      v.autoRotate = !reduce; v.autoRotateSpeed = 0.5;
+      v.playerObject.rotation.y = i ? -0.5 : 0.5;
+      if (!reduce) { v.animation = new skinview3d.WalkingAnimation(); v.animation.speed = 0.6; v.animation.progress = i * 1.3; }
+    });
+    sc.onerror = () => document.querySelectorAll('#mc canvas').forEach(cv => { cv.outerHTML = '<div class="none">skin unavailable</div>'; });
+    document.head.appendChild(sc);
+  }, { rootMargin: '400px' });
+  if (ME.minecraft.length) mcWatch.observe($('mc'));
   if (!ME.minecraft.length) $('minecraft').hidden = true;
   if (!$('grid').children.length) $('socials').hidden = true;
 
@@ -406,257 +597,8 @@ const ME = {
     })();
   })();
 
-  // ---------- Soft Aurora background (ported from React Bits' SoftAurora) ----------
-  const AURORA = {
-    speed: 0.6, scale: 1.5, brightness: 1, color1: '#f7f7f7', color2: '#e100ff',
-    bandHeight: 0.5, bandSpread: 1, mouseInfluence: 0.25, spectrum: 1, colorSpeed: 1,
-    noiseFrequency: 2.5, noiseAmplitude: 1, tilt: 0, octaveDecay: 0.1, layerOffset: 0,
-  };
-  const startAurora = (() => {
-    const canvas = $('aurora');
-    const gl = canvas.getContext('webgl2', { alpha: true, premultipliedAlpha: true, antialias: false, depth: false, stencil: false });
-    if (!gl) return () => {};
-    const VERT = `#version 300 es
-const vec2 corners[3] = vec2[3](vec2(-1.0, -1.0), vec2(3.0, -1.0), vec2(-1.0, 3.0));
-void main() {
-  gl_Position = vec4(corners[gl_VertexID], 0.0, 1.0);
-}`;
-    const FRAG = `#version 300 es
-precision highp float;
-uniform vec2 uResolution;
-uniform float uFlow;
-uniform float uHue;
-uniform float uScale;
-uniform float uBrightness;
-uniform vec3 uColor1;
-uniform vec3 uColor2;
-uniform float uNoiseFreq;
-uniform float uNoiseAmp;
-uniform float uBandHeight;
-uniform float uBandSpread;
-uniform float uOctaveDecay;
-uniform float uLayerOffset;
-uniform vec2 uShift;
-uniform vec4 uCursor;
-uniform vec4 uPulses[4];
-uniform float uSpectrum;
-uniform float uTilt;
-uniform vec3 uIntro;
-uniform float uLightMode;
-uniform float uOpacity;
-out vec4 fragColor;
-
-#define TAU 6.28318
-
-vec3 gradientHash(vec3 p) {
-  p = vec3(
-    dot(p, vec3(127.1, 311.7, 234.6)),
-    dot(p, vec3(269.5, 183.3, 198.3)),
-    dot(p, vec3(169.5, 283.3, 156.9))
-  );
-  vec3 h = fract(sin(p) * 43758.5453123);
-  float phi = acos(2.0 * h.x - 1.0);
-  float theta = TAU * h.y;
-  return vec3(cos(theta) * sin(phi), sin(theta) * cos(phi), cos(phi));
-}
-
-float quinticSmooth(float t) {
-  float t2 = t * t;
-  float t3 = t * t2;
-  return 6.0 * t3 * t2 - 15.0 * t2 * t2 + 10.0 * t3;
-}
-
-vec3 cosineGradient(float t, vec3 a, vec3 b, vec3 c, vec3 d) {
-  return a + b * cos(TAU * (c * t + d));
-}
-
-float perlin3D(float amplitude, float frequency, float px, float py, float pz) {
-  float x = px * frequency;
-  float y = py * frequency;
-
-  float fx = floor(x);
-  float fy = floor(y);
-  float fz = floor(pz);
-  float cx = ceil(x);
-  float cy = ceil(y);
-  float cz = ceil(pz);
-
-  vec3 g000 = gradientHash(vec3(fx, fy, fz));
-  vec3 g100 = gradientHash(vec3(cx, fy, fz));
-  vec3 g010 = gradientHash(vec3(fx, cy, fz));
-  vec3 g110 = gradientHash(vec3(cx, cy, fz));
-  vec3 g001 = gradientHash(vec3(fx, fy, cz));
-  vec3 g101 = gradientHash(vec3(cx, fy, cz));
-  vec3 g011 = gradientHash(vec3(fx, cy, cz));
-  vec3 g111 = gradientHash(vec3(cx, cy, cz));
-
-  float d000 = dot(g000, vec3(x - fx, y - fy, pz - fz));
-  float d100 = dot(g100, vec3(x - cx, y - fy, pz - fz));
-  float d010 = dot(g010, vec3(x - fx, y - cy, pz - fz));
-  float d110 = dot(g110, vec3(x - cx, y - cy, pz - fz));
-  float d001 = dot(g001, vec3(x - fx, y - fy, pz - cz));
-  float d101 = dot(g101, vec3(x - cx, y - fy, pz - cz));
-  float d011 = dot(g011, vec3(x - fx, y - cy, pz - cz));
-  float d111 = dot(g111, vec3(x - cx, y - cy, pz - cz));
-
-  float sx = quinticSmooth(x - fx);
-  float sy = quinticSmooth(y - fy);
-  float sz = quinticSmooth(pz - fz);
-
-  float lx00 = mix(d000, d100, sx);
-  float lx10 = mix(d010, d110, sx);
-  float lx01 = mix(d001, d101, sx);
-  float lx11 = mix(d011, d111, sx);
-
-  float ly0 = mix(lx00, lx10, sy);
-  float ly1 = mix(lx01, lx11, sy);
-
-  return amplitude * mix(ly0, ly1, sz);
-}
-
-float auroraGlow(float t, vec2 uv, float bend) {
-  float noiseVal = 0.0;
-  float freq = uNoiseFreq;
-  float amp = uNoiseAmp;
-  vec2 samplePos = uv * uScale;
-
-  for (float i = 0.0; i < 3.0; i += 1.0) {
-    noiseVal += perlin3D(amp, freq, samplePos.x, samplePos.y, t);
-    amp *= uOctaveDecay;
-    freq *= 2.0;
-  }
-
-  float yBand = uv.y * 10.0 - (uBandHeight + bend) * 10.0;
-  return 0.3 * max(exp(uBandSpread * (1.0 - 1.1 * uIntro.y * abs(noiseVal * uIntro.z + yBand))), 0.0);
-}
-
-vec2 turn(vec2 p, vec2 center) {
-  float c = cos(uTilt);
-  float s = sin(uTilt);
-  vec2 d = p - center;
-  return center + vec2(c * d.x - s * d.y, s * d.x + c * d.y);
-}
-
-void main() {
-  vec2 uv = gl_FragCoord.xy / uResolution.xy;
-  vec2 center = vec2(0.5 * uResolution.x / uResolution.y, 0.5);
-  vec2 screen = turn(gl_FragCoord.xy / uResolution.y, center);
-  vec2 cursor = turn(uCursor.xy, center);
-  vec2 field = screen + uShift;
-  float t = 0.4 * uFlow;
-
-  float reach = exp(-pow((screen.x - cursor.x) / 0.32, 2.0)) * uCursor.z;
-  float gap = cursor.y + uShift.y - uBandHeight;
-  float near = exp(-gap * gap / 0.16);
-  float bend = reach * gap * near * 0.55;
-
-  float pulse = 0.0;
-  for (int i = 0; i < 4; i++) {
-    vec4 wave = uPulses[i];
-    if (wave.z <= 0.0) continue;
-    float x = (abs(screen.x - turn(wave.xy, center).x) - wave.w * 0.55) / (0.1 + wave.w * 0.06);
-    pulse += wave.z * exp(-x * x);
-  }
-  float boost = (1.0 + reach * near * 0.25 + pulse * 0.65) * uIntro.x;
-
-  float glow1 = auroraGlow(t, field, bend) * boost;
-  float glow2 = auroraGlow(t + uLayerOffset, field, bend) * boost;
-  vec3 gradient1 = mix(vec3(1.0), cosineGradient(uv.x + uHue * 0.2, vec3(0.5), vec3(0.5), vec3(1.0), vec3(0.3, 0.20, 0.20)), uSpectrum);
-  vec3 gradient2 = mix(vec3(1.0), cosineGradient(uv.x + uHue * 0.1, vec3(0.5), vec3(0.5), vec3(2.0, 1.0, 0.0), vec3(0.5, 0.20, 0.25)), uSpectrum);
-
-  vec3 col = 0.99 * glow1 * gradient1 * uColor1;
-  col += 0.99 * glow2 * gradient2 * uColor2;
-  col *= uBrightness;
-
-  float grain = (fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715)))) - 0.5) / 255.0;
-  if (uLightMode > 0.5) {
-    float energy = max(col.r, max(col.g, col.b));
-    vec3 hue = clamp(col / max(energy, 1e-4), 0.0, 1.0);
-    vec3 average = (glow1 * uColor1 + glow2 * uColor2) / max(glow1 + glow2, 1e-4);
-    float top = max(average.r, max(average.g, average.b));
-    float spread = top - min(average.r, min(average.g, average.b));
-    float core = smoothstep(0.55, 1.6, energy);
-    float depth = 1.25 + 0.45 * core;
-    vec3 tint = mix(average * 0.82, pow(average / max(top, 1e-4), vec3(depth + 0.6)), smoothstep(0.04, 0.2, spread));
-    float vivid = smoothstep(0.12, 0.55, 1.0 - min(hue.r, min(hue.g, hue.b))) * smoothstep(0.04, 0.2, spread);
-    vec3 ink = mix(tint, pow(hue, vec3(depth)), vivid) * mix(0.93, 0.8, core);
-    float density = 0.88 * (1.0 - exp(-1.9 * pow(energy, 1.7)));
-    density = clamp(density * uOpacity + grain, 0.0, 1.0);
-    fragColor = vec4(ink * density, density);
-  } else {
-    float alpha = clamp(length(col), 0.0, 1.0);
-    vec3 color = clamp(col, 0.0, 1.0);
-    fragColor = vec4(clamp(color * alpha + grain, 0.0, alpha) * uOpacity, alpha * uOpacity);
-  }
-}`;
-    const sh = (type, src) => { const x = gl.createShader(type); gl.shaderSource(x, src); gl.compileShader(x); return x; };
-    const prog = gl.createProgram();
-    gl.attachShader(prog, sh(gl.VERTEX_SHADER, VERT)); gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FRAG)); gl.linkProgram(prog);
-    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) { console.error(gl.getProgramInfoLog(prog)); return () => {}; }
-    const u = {};
-    for (let i = 0, n = gl.getProgramParameter(prog, gl.ACTIVE_UNIFORMS); i < n; i++) {
-      const info = gl.getActiveUniform(prog, i); u[info.name.replace(/\[0\]$/, '')] = gl.getUniformLocation(prog, info.name);
-    }
-    const vao = gl.createVertexArray();
-    const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255);
-    const c1 = hex(AURORA.color1), c2 = hex(AURORA.color2);
-    const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
-    const smoother = t => { const x = clamp(t, 0, 1); return x * x * x * (x * (x * 6 - 15) + 10); };
-    const size = { w: 1, h: 1 }, pointer = { x: .5, y: .5, inside: false }, mouse = { x: .5, y: .5, presence: 0 };
-    const pulses = [], pulseData = new Float32Array(16);
-    let flow = 0, hue = 0, opening = reduce ? 1 : 0, last = 0, raf = 0;
-
-    const resize = () => {
-      size.w = innerWidth; size.h = innerHeight;
-      const ratio = clamp(0.35 + 0.04 * AURORA.noiseFrequency * AURORA.scale, 0.5, 1);
-      canvas.width = Math.max(1, Math.round(size.w * ratio)); canvas.height = Math.max(1, Math.round(size.h * ratio));
-    };
-    const frame = now => {
-      raf = requestAnimationFrame(frame);
-      const dt = clamp((now - last) / 1000 || 0, 0, 0.05); last = now;
-      const pace = reduce ? 0.35 : 1;
-      flow += dt * AURORA.speed * pace; hue += dt * AURORA.speed * AURORA.colorSpeed * pace;
-      if (opening < 1) opening = Math.min(1, opening + dt / 2);
-      const follow = 1 - Math.exp(-dt / 0.325);
-      mouse.x += ((pointer.inside ? pointer.x : .5) - mouse.x) * follow;
-      mouse.y += ((pointer.inside ? pointer.y : .5) - mouse.y) * follow;
-      mouse.presence += ((pointer.inside ? 1 : 0) - mouse.presence) * (1 - Math.exp(-dt / (pointer.inside ? 0.45 : 0.8)));
-      for (let i = pulses.length - 1; i >= 0; i--) if ((pulses[i].age += dt) >= 2.6) pulses.splice(i, 1);
-      pulseData.fill(0);
-      pulses.forEach((p, i) => pulseData.set([p.x, p.y, smoother(p.age / 0.18) * (1 - smoother((p.age - 0.18) / 2.42)), p.age], i * 4));
-      const eased = 1 - Math.pow(1 - opening, 3), aspect = size.w / size.h, inf = AURORA.mouseInfluence;
-      gl.viewport(0, 0, canvas.width, canvas.height); gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
-      gl.useProgram(prog); gl.bindVertexArray(vao);
-      gl.uniform2f(u.uResolution, canvas.width, canvas.height);
-      gl.uniform1f(u.uFlow, flow); gl.uniform1f(u.uHue, hue);
-      gl.uniform1f(u.uScale, AURORA.scale); gl.uniform1f(u.uBrightness, AURORA.brightness);
-      gl.uniform3f(u.uColor1, ...c1); gl.uniform3f(u.uColor2, ...c2);
-      gl.uniform1f(u.uNoiseFreq, AURORA.noiseFrequency); gl.uniform1f(u.uNoiseAmp, AURORA.noiseAmplitude);
-      gl.uniform1f(u.uBandHeight, AURORA.bandHeight); gl.uniform1f(u.uBandSpread, AURORA.bandSpread);
-      gl.uniform1f(u.uOctaveDecay, AURORA.octaveDecay); gl.uniform1f(u.uLayerOffset, AURORA.layerOffset);
-      gl.uniform2f(u.uShift, (mouse.x - .5) * inf, (mouse.y - .5) * inf);
-      gl.uniform4f(u.uCursor, mouse.x * aspect, mouse.y, Math.min(1, inf * 4) * mouse.presence, 0);
-      gl.uniform4fv(u.uPulses, pulseData);
-      gl.uniform1f(u.uSpectrum, AURORA.spectrum); gl.uniform1f(u.uTilt, AURORA.tilt * Math.PI / 180);
-      gl.uniform3f(u.uIntro, smoother(opening / 0.7), 1 + 3 * (1 - eased) * (1 - eased), 0.25 + 0.75 * eased);
-      gl.uniform1f(u.uLightMode, 0); gl.uniform1f(u.uOpacity, 1);
-      gl.drawArrays(gl.TRIANGLES, 0, 3);
-    };
-    const locate = e => ({ x: e.clientX / size.w, y: 1 - e.clientY / size.h });
-    addEventListener('pointermove', e => { Object.assign(pointer, locate(e), { inside: true }); }, { passive: true });
-    addEventListener('pointerdown', e => {
-      if (reduce || !document.body.classList.contains('in')) return;
-      const p = locate(e); pulses.push({ x: p.x * size.w / size.h, y: p.y, age: 0 }); if (pulses.length > 4) pulses.shift();
-    }, { passive: true });
-    addEventListener('pointerup', e => { if (e.pointerType !== 'mouse') pointer.inside = false; });
-    document.documentElement.addEventListener('pointerleave', () => { pointer.inside = false; });
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) { cancelAnimationFrame(raf); raf = 0; } else if (!raf && last) raf = requestAnimationFrame(t => { last = t; frame(t); });
-    });
-    addEventListener('resize', resize); resize();
-    // starts when the visitor enters, so the intro plays as the gif fades out
-    return () => { if (!raf) raf = requestAnimationFrame(t => { last = t; frame(t); }); };
-  })();
+  // ---------- background: React Bits' Silk, run as-is (see the bundle above) ----------
+  const startBg = () => ReactBitsBg.mount(ReactBitsBg.Silk, { speed: 5, scale: 1, color: '#7B7481', noiseIntensity: 1.5, rotation: 0 }, $('bg'));
 
   // ---------- reveal on scroll ----------
   const seen = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('seen'); seen.unobserve(e.target); } }), { threshold: .15 });
@@ -766,7 +708,7 @@ void main() {
     steering = Date.now();
     SECTIONS[i].scrollIntoView({ behavior: reduce ? 'auto' : 'smooth' });
   });
-  let current = 0, auroraOn = false;
+  let current = 0, bgOn = false;
   const onScroll = () => {
     const mid = innerHeight * .45;
     let idx = 0;
@@ -774,7 +716,7 @@ void main() {
     if (idx !== current) { current = idx; if (Date.now() - steering > 900) wheel.set(idx); }
     const past = scrollY > innerHeight * .5;
     document.body.classList.toggle('past', past);
-    if (past && !auroraOn) { auroraOn = true; document.body.classList.add('in'); startAurora(); }
+    if (past && !bgOn) { bgOn = true; startBg(); }
   };
   addEventListener('scroll', onScroll, { passive: true });
   onScroll();
