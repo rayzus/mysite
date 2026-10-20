@@ -80,7 +80,7 @@ main{position:relative;z-index:2}
 .av .deco{position:absolute;left:50%;top:50%;width:120%;height:120%;transform:translate(-50%,-50%);pointer-events:none}
 .av .status{position:absolute;right:2px;bottom:2px;width:24px;height:24px;border-radius:50%;border:5px solid #12141C;background:var(--offline)}
 .status.online,.sdot.online{background:var(--online)} .status.idle,.sdot.idle{background:var(--idle)} .status.dnd,.sdot.dnd{background:var(--dnd)}
-.badges{position:absolute;top:10px;right:16px;display:flex;gap:2px;padding:4px 6px;border-radius:9px;background:rgba(0,0,0,.35);border:1px solid var(--edge)}
+.badges{position:absolute;top:10px;right:16px;display:flex;gap:4px;padding:5px 8px;border-radius:10px;background:rgba(17,18,24,.85);border:1px solid var(--edge)}
 .badges:empty{display:none}
 .badges img{width:22px;height:22px;display:block}
 .dname{margin:8px 0 0;font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:26px;letter-spacing:-.01em;line-height:1.2}
@@ -264,21 +264,6 @@ const ME = {
 
   // ---------- Discord profiles via Lanyard ----------
   const STATUS_TXT = { online: 'online', idle: 'idle', dnd: 'do not disturb', offline: 'offline' };
-  // public_flags bit → Discord's own badge icon. Nitro, boost and quest badges aren't public, so Lanyard can't show them.
-  const BADGES = [
-    [1, 'Discord Staff', '5e74e9b61934fc1f67c65515d1f7e60d'],
-    [2, 'Partnered Server Owner', '3f9748e53446a137a052f3454e2de41e'],
-    [262144, 'Moderator Programs Alumni', 'fee1624003e2fee35cb398e125dc479b'],
-    [4, 'HypeSquad Events', 'bf01d1073931f921909045f3a39fd264'],
-    [64, 'HypeSquad Bravery', '8a88d63823d8a71cd5e390baa45efa02'],
-    [128, 'HypeSquad Brilliance', '011940fd013da3f7fb926e4a1cd2e618'],
-    [256, 'HypeSquad Balance', '3aa41de486fa12454c3761e8e223442e'],
-    [8, 'Bug Hunter', '2717692c7dca7289b35297368a940dd0'],
-    [16384, 'Golden Bug Hunter', '848f79194d4be5ff5f81505cbd0ce1e6'],
-    [131072, 'Early Verified Bot Developer', '6df5892e0f35b051f8b61eace34f4967'],
-    [512, 'Early Supporter', '7060786766c9c840eb3019e725d2b358'],
-    [4194304, 'Active Developer', '6bdc42827a38498929a4920da12695d9'],
-  ];
   const mmss = ms => { const s = Math.max(0, Math.floor(ms / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
   const assetUrl = (appId, img) => !img ? '' : img.startsWith('mp:external/') ? `https://media.discordapp.net/external/${img.slice(12)}`
     : img.startsWith('spotify:') ? `https://i.scdn.co/image/${img.slice(8)}` : `https://cdn.discordapp.com/app-assets/${appId}/${img}.png`;
@@ -338,11 +323,6 @@ const ME = {
     c.q('.deco').hidden = !deco;
     if (deco) c.q('.deco').src = `https://cdn.discordapp.com/avatar-decoration-presets/${deco}.png?size=240&passthrough=true`;
 
-    // badges
-    const flags = u.public_flags || 0;
-    c.q('.badges').innerHTML = BADGES.filter(([bit]) => flags & bit).map(([, name, hash]) =>
-      `<img src="https://cdn.discordapp.com/badge-icons/${hash}.png" alt="${name}" title="${name}" onerror="this.remove()">`).join('');
-
     // server tag
     const g = u.primary_guild, tag = c.q('.gtag');
     tag.hidden = !(g && g.tag && g.identity_enabled !== false);
@@ -364,6 +344,13 @@ const ME = {
     c.busy = !!(c.spot || game);
     if (!c.busy) showActivity(c, c.fallback);
   }
+
+  // the exact badges Discord shows, via /api/badges (see api/badges.js)
+  const loadBadges = id => fetch('/api/badges?id=' + id).then(r => r.ok ? r.json() : []).then(list => {
+    cards[id].q('.badges').innerHTML = list.map(b =>
+      `<img src="https://cdn.discordapp.com/badge-icons/${esc(b.icon)}.png" alt="${esc(b.description)}" title="${esc(b.description)}" onerror="this.remove()">`).join('');
+  }).catch(() => {});
+  ME.discordIds.forEach(id => { loadBadges(id); setInterval(() => loadBadges(id), 10 * 60 * 1000); });
 
   setInterval(() => {
     for (const c of Object.values(cards)) {
