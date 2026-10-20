@@ -24,21 +24,15 @@ a{color:inherit;text-decoration:none}
 button{font:inherit;color:inherit}
 .mono{font-family:"JetBrains Mono",ui-monospace,monospace}
 
-/* ---------- backdrop: rain, glow, grain ---------- */
-#rain{position:fixed;inset:0;width:100%;height:100%;z-index:0}
-.glow{position:fixed;inset:-20%;z-index:0;pointer-events:none;
-  background:
-    radial-gradient(40% 35% at 50% 0%, rgba(124,140,255,.22), transparent 70%),
-    radial-gradient(35% 30% at 85% 90%, rgba(159,231,255,.10), transparent 70%),
-    radial-gradient(30% 30% at 10% 80%, rgba(124,140,255,.08), transparent 70%);
-  animation:drift 18s ease-in-out infinite alternate}
-@keyframes drift{to{transform:translate3d(-3%,2%,0) scale(1.05)}}
+/* ---------- backdrop: aurora + grain ---------- */
+#aurora{position:fixed;inset:0;width:100%;height:100%;z-index:0;display:block}
 .grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.07;mix-blend-mode:overlay;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 
-/* ---------- click to enter ---------- */
-#gate{position:fixed;inset:0;z-index:20;display:grid;place-items:center;cursor:pointer;
-  background:rgba(7,8,12,.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);transition:opacity .7s ease, visibility .7s}
+/* ---------- opening gif, click to enter ---------- */
+#gate{position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;
+  padding:16px;cursor:pointer;background:#000;transition:opacity .8s ease, visibility .8s}
+#gate img{width:min(420px,86vw);max-height:60vh;object-fit:contain;border-radius:16px}
 #gate span{font-family:"JetBrains Mono",monospace;letter-spacing:.32em;font-size:13px;color:var(--muted);animation:pulse 2.4s ease-in-out infinite}
 #gate.gone{opacity:0;visibility:hidden}
 @keyframes pulse{50%{opacity:.35}}
@@ -107,9 +101,9 @@ h1{margin:10px 0 0;font-family:"Bricolage Grotesque",sans-serif;font-weight:800;
 .soc b{display:block;font-weight:600;font-size:14px}
 .soc small{display:block;color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-footer{position:relative;z-index:2;margin-top:10px;display:flex;gap:16px;justify-content:center;align-items:center;font-size:12px;color:var(--faint)}
-footer button{background:none;border:0;cursor:pointer;color:var(--faint);padding:4px}
-footer button:hover{color:var(--ink)}
+.sect{margin:6px 4px 10px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+.igrow{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:8px;scrollbar-width:thin}
+.igrow iframe{flex:none;width:300px;max-width:82vw;height:470px;border:0;border-radius:16px;background:#14161D;scroll-snap-align:start}
 #toast{position:fixed;left:50%;bottom:28px;z-index:30;transform:translate(-50%,20px);opacity:0;pointer-events:none;
   padding:8px 14px;border-radius:10px;background:#0E1118;border:1px solid var(--edge);font-size:13px;transition:.25s}
 #toast.on{opacity:1;transform:translate(-50%,0)}
@@ -122,11 +116,10 @@ footer button:hover{color:var(--ink)}
 </style>
 </head>
 <body>
-<canvas id="rain" aria-hidden="true"></canvas>
-<div class="glow" aria-hidden="true"></div>
+<canvas id="aurora" aria-hidden="true"></canvas>
 <div class="grain" aria-hidden="true"></div>
 
-<div id="gate" role="button" tabindex="0" aria-label="Enter"><span>click to enter</span></div>
+<div id="gate" role="button" tabindex="0" aria-label="Enter"><img src="https://media.giphy.com/media/RDZV01Tll6VBtL3O0V/giphy.gif" alt=""><span>click to enter</span></div>
 
 <main>
   <div class="wrap">
@@ -153,11 +146,12 @@ footer button:hover{color:var(--ink)}
     </section>
 
     <nav class="grid" id="grid" aria-label="Where to find me"></nav>
-  </div>
 
-  <footer class="rise" style="animation-delay:.4s">
-    <button id="mute" type="button" aria-pressed="false" title="Rain sound">🔇 rain</button>
-  </footer>
+    <section class="rise" id="ig" hidden style="animation-delay:.45s">
+      <p class="sect">Instagram</p>
+      <div class="igrow" id="igrow"></div>
+    </section>
+  </div>
 </main>
 <div id="toast" role="status"></div>
 
@@ -175,15 +169,21 @@ const ME = {
   // The first account fills the big card; every account also gets a live card in the grid.
   discordIds: ['881075541954924554', '787529668953767966'],
 
-  reddit:    'Specialist-Tackle296', // without the u/                    // without the u/
+  reddit:    'Specialist-Tackle296', // without the u/
   steam:     '',                    // steamcommunity.com/id/<this>
   roblox:    '',                    // roblox user ID number
   spotify:   '',                    // open.spotify.com/user/<this>
-  minecraft: ['peRishAbilitY.2', 'rayzus.1', 'RealMelon.5'],   // NameMC profile names
+  // Minecraft: copy the UUID from each NameMC profile page so the right skin shows
+  minecraft: [
+    { name: 'peRishAbilitY', namemc: 'peRishAbilitY.2', uuid: '' },
+    { name: 'RealMelon',     namemc: 'RealMelon.5',     uuid: '' },
+  ],
   youtube:   '',                    // without the @
   twitch:    '',
   tiktok:    '',                    // without the @
   instagram: 'lilperishability',
+  // Instagram posts to show: paste links like 'https://www.instagram.com/p/ABC123/'
+  instagramPosts: [],
   x:         '',
   github:    '',
 };
@@ -202,7 +202,7 @@ const ME = {
     ['steam', 'Steam', '#1B2838', u => `https://steamcommunity.com/id/${u}`, 'M12 1a11 11 0 0 0-11 10.1l5.9 2.4a3.1 3.1 0 0 1 1.8-.5l2.6-3.8v-.1a4.1 4.1 0 1 1 4.1 4.1h-.1l-3.8 2.7v.2a3.1 3.1 0 0 1-6.1.8L1.2 15A11 11 0 1 0 12 1zM7.9 17.7l-1.4-.6a2.3 2.3 0 1 0 1.2-3.1l1.4.6a1.7 1.7 0 1 1-1.2 3.1zm10.5-8.4a2.7 2.7 0 1 0-2.7 2.7 2.7 2.7 0 0 0 2.7-2.7zm-4.8 0a2.1 2.1 0 1 1 2.1 2.1 2.1 2.1 0 0 1-2.1-2.1z'],
     ['roblox', 'Roblox', '#E2231A', u => `https://www.roblox.com/users/${u}/profile`, 'M5.2 1 1 18.8 18.8 23 23 5.2zm8.2 14-4.4-1.1 1.1-4.4 4.4 1.1z'],
     ['spotify', 'Spotify', '#1DB954', u => `https://open.spotify.com/user/${u}`, 'M12 1a11 11 0 1 0 11 11A11 11 0 0 0 12 1zm5 15.9a.7.7 0 0 1-.9.2c-2.6-1.6-5.9-2-9.7-1.1a.7.7 0 1 1-.3-1.3c4.2-1 7.8-.6 10.7 1.2a.7.7 0 0 1 .2 1zm1.4-3a.9.9 0 0 1-1.2.3c-3-1.8-7.5-2.4-11-1.3a.9.9 0 1 1-.5-1.7c4-1.2 9-.6 12.4 1.5a.9.9 0 0 1 .3 1.2zm.1-3.2C14.9 8.6 9 8.4 5.6 9.4a1 1 0 1 1-.6-2c4-1.2 10.5-1 14.5 1.4a1 1 0 1 1-1 1.8z'],
-    ['minecraft', 'Minecraft', '#3C8527', u => `https://namemc.com/profile/${u}`, 'M3 3h18v18H3zm4 4v4h4V7zm6 0v4h4V7zm-3 4v2H8v6h3v-2h2v2h3v-6h-2v-2z'],
+    ['minecraft', 'Minecraft', '#3C8527', m => `https://namemc.com/profile/${m.uuid || m.namemc || m.name}`, 'M3 3h18v18H3zm4 4v4h4V7zm6 0v4h4V7zm-3 4v2H8v6h3v-2h2v2h3v-6h-2v-2z'],
     ['youtube', 'YouTube', '#FF0000', u => `https://www.youtube.com/@${u}`, 'M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8zM9.6 15.6V8.4l6.2 3.6z'],
     ['twitch', 'Twitch', '#9146FF', u => `https://www.twitch.tv/${u}`, 'M2.1 0 .5 4.2v16.9h5.8V24h3.2l3-3h4.7l6.3-6.3V0zm19.7 13.6-3.7 3.7h-5.8l-3.2 3.2v-3.2H4.2V2.1h17.6zM18.1 6.3v6.3H16V6.3zm-5.8 0v6.3h-2.1V6.3z'],
     ['tiktok', 'TikTok', '#111', u => `https://www.tiktok.com/@${u}`, 'M19.6 6.7a4.8 4.8 0 0 1-3.8-4.2V2h-3.4v13.7a2.9 2.9 0 1 1-2-2.7V9.4a6.3 6.3 0 1 0 5.4 6.3V8.7a8.2 8.2 0 0 0 4.8 1.5V6.8a4.8 4.8 0 0 1-1-.1z'],
@@ -218,9 +218,9 @@ const ME = {
   ];
   $('grid').innerHTML = entries.map(([k, v], i) => {
     const [, label, c, url, path] = SITES.find(x => x[0] === k);
-    const handle = k === 'discord' ? 'loading…' : k === 'reddit' ? 'u/' + v : k === 'roblox' ? 'profile' : k === 'minecraft' ? v.replace(/\.\d+$/, '') : (['youtube', 'tiktok', 'instagram'].includes(k) ? '@' : '') + v;
+    const handle = k === 'discord' ? 'loading…' : k === 'reddit' ? 'u/' + v : k === 'roblox' ? 'profile' : k === 'minecraft' ? v.name : (['youtube', 'tiktok', 'instagram'].includes(k) ? '@' : '') + v;
     return `<a href="${esc(url(v))}" target="_blank" rel="noopener" class="card soc rise"${k === 'discord' ? ` data-dc="${esc(v)}"` : ''} style="--c:${c};animation-delay:${.18 + i * .04}s">
-      <span class="ic"${k === 'minecraft' ? ` style="background:#3C8527 url('https://mc-heads.net/avatar/${esc(encodeURIComponent(v.replace(/\.\d+$/, '')))}/80') center/cover;image-rendering:pixelated"` : ''}>${k === 'minecraft' ? '' : `<svg viewBox="0 0 24 24"><path d="${path}"/></svg>`}${k === 'discord' ? '<i class="sdot"></i>' : ''}</span>
+      <span class="ic"${k === 'minecraft' ? ` style="background:#3C8527 url('https://mc-heads.net/avatar/${esc(encodeURIComponent((v.uuid || v.name).replace(/-/g, '')))}/80') center/cover;image-rendering:pixelated"` : ''}>${k === 'minecraft' ? '' : `<svg viewBox="0 0 24 24"><path d="${path}"/></svg>`}${k === 'discord' ? '<i class="sdot"></i>' : ''}</span>
       <span class="t"><b>${label}</b><small>${esc(handle)}</small></span></a>`;
   }).join('');
 
@@ -315,67 +315,271 @@ const ME = {
     setTimeout(nowPlaying, 30000);
   }
 
-  // ---------- rain ----------
-  const cv = $('rain'), cx = cv.getContext('2d');
-  let W, H, drops = [], splashes = [];
-  const drop = init => {
-    const z = Math.random();  // depth: far drops are slower, shorter, fainter
-    return { x: Math.random() * (W + 200) - 100, y: init ? Math.random() * H : -20 - Math.random() * 100, v: 7 + z * 12, l: 8 + z * 18, a: .08 + z * .32, w: .6 + z * .9, z };
-  };
-  const size = () => {
-    const d = Math.min(devicePixelRatio || 1, 2);
-    W = innerWidth; H = innerHeight; cv.width = W * d; cv.height = H * d; cx.setTransform(d, 0, 0, d, 0, 0);
-    drops = Array.from({ length: Math.round(W * H / (reduce ? 9000 : 4500)) }, () => drop(true));
-  };
-  let wind = -1.2, mx = .5;
-  addEventListener('pointermove', e => { mx = e.clientX / W; });
-  const frame = () => {
-    wind += ((mx - .5) * -4 - wind) * .02;
-    cx.clearRect(0, 0, W, H); cx.lineCap = 'round';
-    for (const d of drops) {
-      d.x += wind * (.4 + d.z); d.y += d.v;
-      if (d.y > H) {
-        if (d.z > .6 && splashes.length < 80) splashes.push({ x: d.x, y: H - Math.random() * 40, r: 0, a: .35 });
-        Object.assign(d, drop(false));
-      }
-      cx.strokeStyle = `rgba(190,205,255,${d.a})`; cx.lineWidth = d.w;
-      cx.beginPath(); cx.moveTo(d.x, d.y); cx.lineTo(d.x - wind * d.l * .12, d.y - d.l); cx.stroke();
-    }
-    splashes = splashes.filter(s => (s.r += .6, s.a -= .02) > 0);
-    for (const s of splashes) {
-      cx.strokeStyle = `rgba(190,205,255,${s.a})`; cx.lineWidth = .8;
-      cx.beginPath(); cx.ellipse(s.x, s.y, s.r * 2, s.r * .5, 0, 0, Math.PI * 2); cx.stroke();
-    }
-    requestAnimationFrame(frame);
-  };
-  addEventListener('resize', size); size(); frame();
+  // ---------- Instagram posts (Instagram's own embeds, no login needed) ----------
+  const posts = ME.instagramPosts.map(u => /\/(p|reel|tv)\/([\w-]+)/.exec(u)).filter(Boolean);
+  if (posts.length) {
+    $('igrow').innerHTML = posts.map(([, kind, code]) =>
+      `<iframe src="https://www.instagram.com/${kind}/${esc(code)}/embed/" loading="lazy" scrolling="no" allowtransparency="true" title="Instagram post"></iframe>`).join('');
+    $('ig').hidden = false;
+  }
 
-  // ---------- rain sound (filtered noise, made live) ----------
-  let ac, gain;
-  const setSound = on => {
-    if (!ac) {
-      ac = new (window.AudioContext || window.webkitAudioContext)();
-      const buf = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate), ch = buf.getChannelData(0);
-      for (let i = 0, last = 0; i < ch.length; i++) { last = (last + .02 * (Math.random() * 2 - 1)) / 1.02; ch[i] = last * 3.5; }
-      const src = ac.createBufferSource(); src.buffer = buf; src.loop = true;
-      const hp = ac.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 400;
-      const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2600;
-      gain = ac.createGain(); gain.gain.value = 0;
-      src.connect(hp).connect(lp).connect(gain).connect(ac.destination); src.start();
-    }
-    gain.gain.setTargetAtTime(on ? .35 : 0, ac.currentTime, .6);
-    $('mute').textContent = on ? '🔊 rain' : '🔇 rain';
-    $('mute').setAttribute('aria-pressed', on);
-    try { localStorage.setItem('links-sound', on ? '1' : '0'); } catch (e) {}
+  // ---------- Soft Aurora background (ported from React Bits' SoftAurora) ----------
+  const AURORA = {
+    speed: 0.6, scale: 1.5, brightness: 1, color1: '#f7f7f7', color2: '#e100ff',
+    bandHeight: 0.5, bandSpread: 1, mouseInfluence: 0.25, spectrum: 1, colorSpeed: 1,
+    noiseFrequency: 2.5, noiseAmplitude: 1, tilt: 0, octaveDecay: 0.1, layerOffset: 0,
   };
-  $('mute').addEventListener('click', () => setSound($('mute').getAttribute('aria-pressed') !== 'true'));
+  const startAurora = (() => {
+    const canvas = $('aurora');
+    const gl = canvas.getContext('webgl2', { alpha: true, premultipliedAlpha: true, antialias: false, depth: false, stencil: false });
+    if (!gl) return () => {};
+    const VERT = `#version 300 es
+const vec2 corners[3] = vec2[3](vec2(-1.0, -1.0), vec2(3.0, -1.0), vec2(-1.0, 3.0));
+void main() {
+  gl_Position = vec4(corners[gl_VertexID], 0.0, 1.0);
+}`;
+    const FRAG = `#version 300 es
+precision highp float;
+uniform vec2 uResolution;
+uniform float uFlow;
+uniform float uHue;
+uniform float uScale;
+uniform float uBrightness;
+uniform vec3 uColor1;
+uniform vec3 uColor2;
+uniform float uNoiseFreq;
+uniform float uNoiseAmp;
+uniform float uBandHeight;
+uniform float uBandSpread;
+uniform float uOctaveDecay;
+uniform float uLayerOffset;
+uniform vec2 uShift;
+uniform vec4 uCursor;
+uniform vec4 uPulses[4];
+uniform float uSpectrum;
+uniform float uTilt;
+uniform vec3 uIntro;
+uniform float uLightMode;
+uniform float uOpacity;
+out vec4 fragColor;
+
+#define TAU 6.28318
+
+vec3 gradientHash(vec3 p) {
+  p = vec3(
+    dot(p, vec3(127.1, 311.7, 234.6)),
+    dot(p, vec3(269.5, 183.3, 198.3)),
+    dot(p, vec3(169.5, 283.3, 156.9))
+  );
+  vec3 h = fract(sin(p) * 43758.5453123);
+  float phi = acos(2.0 * h.x - 1.0);
+  float theta = TAU * h.y;
+  return vec3(cos(theta) * sin(phi), sin(theta) * cos(phi), cos(phi));
+}
+
+float quinticSmooth(float t) {
+  float t2 = t * t;
+  float t3 = t * t2;
+  return 6.0 * t3 * t2 - 15.0 * t2 * t2 + 10.0 * t3;
+}
+
+vec3 cosineGradient(float t, vec3 a, vec3 b, vec3 c, vec3 d) {
+  return a + b * cos(TAU * (c * t + d));
+}
+
+float perlin3D(float amplitude, float frequency, float px, float py, float pz) {
+  float x = px * frequency;
+  float y = py * frequency;
+
+  float fx = floor(x);
+  float fy = floor(y);
+  float fz = floor(pz);
+  float cx = ceil(x);
+  float cy = ceil(y);
+  float cz = ceil(pz);
+
+  vec3 g000 = gradientHash(vec3(fx, fy, fz));
+  vec3 g100 = gradientHash(vec3(cx, fy, fz));
+  vec3 g010 = gradientHash(vec3(fx, cy, fz));
+  vec3 g110 = gradientHash(vec3(cx, cy, fz));
+  vec3 g001 = gradientHash(vec3(fx, fy, cz));
+  vec3 g101 = gradientHash(vec3(cx, fy, cz));
+  vec3 g011 = gradientHash(vec3(fx, cy, cz));
+  vec3 g111 = gradientHash(vec3(cx, cy, cz));
+
+  float d000 = dot(g000, vec3(x - fx, y - fy, pz - fz));
+  float d100 = dot(g100, vec3(x - cx, y - fy, pz - fz));
+  float d010 = dot(g010, vec3(x - fx, y - cy, pz - fz));
+  float d110 = dot(g110, vec3(x - cx, y - cy, pz - fz));
+  float d001 = dot(g001, vec3(x - fx, y - fy, pz - cz));
+  float d101 = dot(g101, vec3(x - cx, y - fy, pz - cz));
+  float d011 = dot(g011, vec3(x - fx, y - cy, pz - cz));
+  float d111 = dot(g111, vec3(x - cx, y - cy, pz - cz));
+
+  float sx = quinticSmooth(x - fx);
+  float sy = quinticSmooth(y - fy);
+  float sz = quinticSmooth(pz - fz);
+
+  float lx00 = mix(d000, d100, sx);
+  float lx10 = mix(d010, d110, sx);
+  float lx01 = mix(d001, d101, sx);
+  float lx11 = mix(d011, d111, sx);
+
+  float ly0 = mix(lx00, lx10, sy);
+  float ly1 = mix(lx01, lx11, sy);
+
+  return amplitude * mix(ly0, ly1, sz);
+}
+
+float auroraGlow(float t, vec2 uv, float bend) {
+  float noiseVal = 0.0;
+  float freq = uNoiseFreq;
+  float amp = uNoiseAmp;
+  vec2 samplePos = uv * uScale;
+
+  for (float i = 0.0; i < 3.0; i += 1.0) {
+    noiseVal += perlin3D(amp, freq, samplePos.x, samplePos.y, t);
+    amp *= uOctaveDecay;
+    freq *= 2.0;
+  }
+
+  float yBand = uv.y * 10.0 - (uBandHeight + bend) * 10.0;
+  return 0.3 * max(exp(uBandSpread * (1.0 - 1.1 * uIntro.y * abs(noiseVal * uIntro.z + yBand))), 0.0);
+}
+
+vec2 turn(vec2 p, vec2 center) {
+  float c = cos(uTilt);
+  float s = sin(uTilt);
+  vec2 d = p - center;
+  return center + vec2(c * d.x - s * d.y, s * d.x + c * d.y);
+}
+
+void main() {
+  vec2 uv = gl_FragCoord.xy / uResolution.xy;
+  vec2 center = vec2(0.5 * uResolution.x / uResolution.y, 0.5);
+  vec2 screen = turn(gl_FragCoord.xy / uResolution.y, center);
+  vec2 cursor = turn(uCursor.xy, center);
+  vec2 field = screen + uShift;
+  float t = 0.4 * uFlow;
+
+  float reach = exp(-pow((screen.x - cursor.x) / 0.32, 2.0)) * uCursor.z;
+  float gap = cursor.y + uShift.y - uBandHeight;
+  float near = exp(-gap * gap / 0.16);
+  float bend = reach * gap * near * 0.55;
+
+  float pulse = 0.0;
+  for (int i = 0; i < 4; i++) {
+    vec4 wave = uPulses[i];
+    if (wave.z <= 0.0) continue;
+    float x = (abs(screen.x - turn(wave.xy, center).x) - wave.w * 0.55) / (0.1 + wave.w * 0.06);
+    pulse += wave.z * exp(-x * x);
+  }
+  float boost = (1.0 + reach * near * 0.25 + pulse * 0.65) * uIntro.x;
+
+  float glow1 = auroraGlow(t, field, bend) * boost;
+  float glow2 = auroraGlow(t + uLayerOffset, field, bend) * boost;
+  vec3 gradient1 = mix(vec3(1.0), cosineGradient(uv.x + uHue * 0.2, vec3(0.5), vec3(0.5), vec3(1.0), vec3(0.3, 0.20, 0.20)), uSpectrum);
+  vec3 gradient2 = mix(vec3(1.0), cosineGradient(uv.x + uHue * 0.1, vec3(0.5), vec3(0.5), vec3(2.0, 1.0, 0.0), vec3(0.5, 0.20, 0.25)), uSpectrum);
+
+  vec3 col = 0.99 * glow1 * gradient1 * uColor1;
+  col += 0.99 * glow2 * gradient2 * uColor2;
+  col *= uBrightness;
+
+  float grain = (fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715)))) - 0.5) / 255.0;
+  if (uLightMode > 0.5) {
+    float energy = max(col.r, max(col.g, col.b));
+    vec3 hue = clamp(col / max(energy, 1e-4), 0.0, 1.0);
+    vec3 average = (glow1 * uColor1 + glow2 * uColor2) / max(glow1 + glow2, 1e-4);
+    float top = max(average.r, max(average.g, average.b));
+    float spread = top - min(average.r, min(average.g, average.b));
+    float core = smoothstep(0.55, 1.6, energy);
+    float depth = 1.25 + 0.45 * core;
+    vec3 tint = mix(average * 0.82, pow(average / max(top, 1e-4), vec3(depth + 0.6)), smoothstep(0.04, 0.2, spread));
+    float vivid = smoothstep(0.12, 0.55, 1.0 - min(hue.r, min(hue.g, hue.b))) * smoothstep(0.04, 0.2, spread);
+    vec3 ink = mix(tint, pow(hue, vec3(depth)), vivid) * mix(0.93, 0.8, core);
+    float density = 0.88 * (1.0 - exp(-1.9 * pow(energy, 1.7)));
+    density = clamp(density * uOpacity + grain, 0.0, 1.0);
+    fragColor = vec4(ink * density, density);
+  } else {
+    float alpha = clamp(length(col), 0.0, 1.0);
+    vec3 color = clamp(col, 0.0, 1.0);
+    fragColor = vec4(clamp(color * alpha + grain, 0.0, alpha) * uOpacity, alpha * uOpacity);
+  }
+}`;
+    const sh = (type, src) => { const x = gl.createShader(type); gl.shaderSource(x, src); gl.compileShader(x); return x; };
+    const prog = gl.createProgram();
+    gl.attachShader(prog, sh(gl.VERTEX_SHADER, VERT)); gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FRAG)); gl.linkProgram(prog);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) { console.error(gl.getProgramInfoLog(prog)); return () => {}; }
+    const u = {};
+    for (let i = 0, n = gl.getProgramParameter(prog, gl.ACTIVE_UNIFORMS); i < n; i++) {
+      const info = gl.getActiveUniform(prog, i); u[info.name.replace(/\[0\]$/, '')] = gl.getUniformLocation(prog, info.name);
+    }
+    const vao = gl.createVertexArray();
+    const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255);
+    const c1 = hex(AURORA.color1), c2 = hex(AURORA.color2);
+    const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+    const smoother = t => { const x = clamp(t, 0, 1); return x * x * x * (x * (x * 6 - 15) + 10); };
+    const size = { w: 1, h: 1 }, pointer = { x: .5, y: .5, inside: false }, mouse = { x: .5, y: .5, presence: 0 };
+    const pulses = [], pulseData = new Float32Array(16);
+    let flow = 0, hue = 0, opening = reduce ? 1 : 0, last = 0, raf = 0;
+
+    const resize = () => {
+      size.w = innerWidth; size.h = innerHeight;
+      const ratio = clamp(0.35 + 0.04 * AURORA.noiseFrequency * AURORA.scale, 0.5, 1);
+      canvas.width = Math.max(1, Math.round(size.w * ratio)); canvas.height = Math.max(1, Math.round(size.h * ratio));
+    };
+    const frame = now => {
+      raf = requestAnimationFrame(frame);
+      const dt = clamp((now - last) / 1000 || 0, 0, 0.05); last = now;
+      const pace = reduce ? 0.35 : 1;
+      flow += dt * AURORA.speed * pace; hue += dt * AURORA.speed * AURORA.colorSpeed * pace;
+      if (opening < 1) opening = Math.min(1, opening + dt / 2);
+      const follow = 1 - Math.exp(-dt / 0.325);
+      mouse.x += ((pointer.inside ? pointer.x : .5) - mouse.x) * follow;
+      mouse.y += ((pointer.inside ? pointer.y : .5) - mouse.y) * follow;
+      mouse.presence += ((pointer.inside ? 1 : 0) - mouse.presence) * (1 - Math.exp(-dt / (pointer.inside ? 0.45 : 0.8)));
+      for (let i = pulses.length - 1; i >= 0; i--) if ((pulses[i].age += dt) >= 2.6) pulses.splice(i, 1);
+      pulseData.fill(0);
+      pulses.forEach((p, i) => pulseData.set([p.x, p.y, smoother(p.age / 0.18) * (1 - smoother((p.age - 0.18) / 2.42)), p.age], i * 4));
+      const eased = 1 - Math.pow(1 - opening, 3), aspect = size.w / size.h, inf = AURORA.mouseInfluence;
+      gl.viewport(0, 0, canvas.width, canvas.height); gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.useProgram(prog); gl.bindVertexArray(vao);
+      gl.uniform2f(u.uResolution, canvas.width, canvas.height);
+      gl.uniform1f(u.uFlow, flow); gl.uniform1f(u.uHue, hue);
+      gl.uniform1f(u.uScale, AURORA.scale); gl.uniform1f(u.uBrightness, AURORA.brightness);
+      gl.uniform3f(u.uColor1, ...c1); gl.uniform3f(u.uColor2, ...c2);
+      gl.uniform1f(u.uNoiseFreq, AURORA.noiseFrequency); gl.uniform1f(u.uNoiseAmp, AURORA.noiseAmplitude);
+      gl.uniform1f(u.uBandHeight, AURORA.bandHeight); gl.uniform1f(u.uBandSpread, AURORA.bandSpread);
+      gl.uniform1f(u.uOctaveDecay, AURORA.octaveDecay); gl.uniform1f(u.uLayerOffset, AURORA.layerOffset);
+      gl.uniform2f(u.uShift, (mouse.x - .5) * inf, (mouse.y - .5) * inf);
+      gl.uniform4f(u.uCursor, mouse.x * aspect, mouse.y, Math.min(1, inf * 4) * mouse.presence, 0);
+      gl.uniform4fv(u.uPulses, pulseData);
+      gl.uniform1f(u.uSpectrum, AURORA.spectrum); gl.uniform1f(u.uTilt, AURORA.tilt * Math.PI / 180);
+      gl.uniform3f(u.uIntro, smoother(opening / 0.7), 1 + 3 * (1 - eased) * (1 - eased), 0.25 + 0.75 * eased);
+      gl.uniform1f(u.uLightMode, 0); gl.uniform1f(u.uOpacity, 1);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+    };
+    const locate = e => ({ x: e.clientX / size.w, y: 1 - e.clientY / size.h });
+    addEventListener('pointermove', e => { Object.assign(pointer, locate(e), { inside: true }); }, { passive: true });
+    addEventListener('pointerdown', e => {
+      if (reduce || !document.body.classList.contains('in')) return;
+      const p = locate(e); pulses.push({ x: p.x * size.w / size.h, y: p.y, age: 0 }); if (pulses.length > 4) pulses.shift();
+    }, { passive: true });
+    addEventListener('pointerup', e => { if (e.pointerType !== 'mouse') pointer.inside = false; });
+    document.documentElement.addEventListener('pointerleave', () => { pointer.inside = false; });
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) { cancelAnimationFrame(raf); raf = 0; } else if (!raf && last) raf = requestAnimationFrame(t => { last = t; frame(t); });
+    });
+    addEventListener('resize', resize); resize();
+    // starts when the visitor enters, so the intro plays as the gif fades out
+    return () => { if (!raf) raf = requestAnimationFrame(t => { last = t; frame(t); }); };
+  })();
 
   // ---------- gate ----------
   const enter = () => {
     if (document.body.classList.contains('in')) return;
     $('gate').classList.add('gone'); document.body.classList.add('in');
-    let pref = '1'; try { pref = localStorage.getItem('links-sound') ?? '1'; } catch (e) {}
-    if (pref === '1') setSound(true);
+    startAurora();
     typeBio();
   };
   $('gate').addEventListener('click', enter);
